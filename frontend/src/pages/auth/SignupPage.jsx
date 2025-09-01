@@ -18,24 +18,61 @@ function SignupPage() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     const { name, regNumber, course, email, password, confirmPassword } = formData;
 
     if (!name || !regNumber || !course || !email || !password || !confirmPassword) {
       setError("Please fill in all fields.");
+      setSuccess("");
       return;
     }
 
     if (password !== confirmPassword) {
       setError("Passwords do not match.");
+      setSuccess("");
       return;
     }
 
-    setError("");
-    setSuccess("Account created successfully. You can now log in.");
-    console.log("Form submitted:", formData);
+    try {
+      setError("");
+      setSuccess("");
+
+      const API_BASE = "http://127.0.0.1:5000";
+      const res = await fetch(`${API_BASE}/api/auth/register`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name,
+          regNumber,
+          course,
+          email,
+          password,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data?.error || "Failed to create account.");
+        setSuccess("");
+        return;
+      }
+
+      setSuccess(data?.message || "Account created successfully. You can now log in.");
+      setFormData({
+        name: "",
+        regNumber: "",
+        course: "",
+        email: "",
+        password: "",
+        confirmPassword: "",
+      });
+    } catch (err) {
+      setError("Network error. Please try again.");
+      setSuccess("");
+    }
   };
 
   return (
