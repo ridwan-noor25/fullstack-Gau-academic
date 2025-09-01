@@ -79,6 +79,8 @@ export default function StudentLayout() {
         </header>
 
         {/* Content */}
+
+
         <main className="px-4 sm:px-6 lg:px-8 py-6">
           {/* No overlapping, no hidden sections */}
           <Outlet />
@@ -87,3 +89,5 @@ export default function StudentLayout() {
     </div>
   );
 }
+
+

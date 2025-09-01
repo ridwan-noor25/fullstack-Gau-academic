@@ -5,6 +5,7 @@ from flask_cors import CORS
 from .extensions import db, migrate, jwt
 from .auth import auth_bp
 from .routes import api_bp
+from .hod import hod_bp
 
 
 def create_app():
@@ -25,6 +26,7 @@ def create_app():
     # Blueprints
     app.register_blueprint(auth_bp, url_prefix="/api/auth")
     app.register_blueprint(api_bp, url_prefix="/api")
+    app.register_blueprint(hod_bp, url_prefix="/api/hod")
 
     @app.get("/api/health")
     def health():

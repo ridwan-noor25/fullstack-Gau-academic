@@ -203,50 +203,121 @@
 
 
 
-import React from 'react'
-import { Routes, Route } from 'react-router-dom'
+// import React from 'react'
+// import { Routes, Route } from 'react-router-dom'
 
-import Home from './pages/Home'
-import Login from './pages/LoginPage'
-import Departments from './Admin/pages/Departments'
-import RegisterUser from './Admin/RegisterUser'
-import Units from './Admin/pages/Units'
-import Enroll from './Admin/pages/Enroll'
-import Pending from './Admin/pages/Pending'
-import Publish from './Admin/pages/Publish'
-import Assessments from './Admin/pages/Assessments'
-import Grades from './Admin/pages/Grades'
-import MyGrades from './Admin/pages/MyGrades'
-import MissingReport from './Admin/pages/MissingReport'
-import AuthProvider from './auth/AuthContext'
-import Nav from './components/Navbar'
-import SignupPage from './pages/auth/SignupPage'
+// import Home from './pages/Home'
+// import Login from './pages/LoginPage'
+// import Departments from './Admin/pages/Departments'
+// import RegisterUser from './Admin/RegisterUser'
+// import Units from './Admin/pages/Units'
+// import Enroll from './Admin/pages/Enroll'
+// import Pending from './Admin/pages/Pending'
+// import Publish from './Admin/pages/Publish'
+// import Assessments from './Admin/pages/Assessments'
+// import Grades from './Admin/pages/Grades'
+// import MyGrades from './Admin/pages/MyGrades'
+// import MissingReport from './Admin/pages/MissingReport'
+// import AuthProvider from './auth/AuthContext'
+// import Nav from './components/Navbar'
+// import SignupPage from './pages/auth/SignupPage'
+// import HodCreateLecturer from './Admin/pages/HodCreateLecturer'
 
 
 
-export default function App(){
-return (
-<AuthProvider>
-<Nav/>
-<Routes>
-<Route path="/" element={<Home/>} />
-<Route path="/login" element={<Login/>} />
-<Route path="/signup" element={<SignupPage/>} />
-{/* Admin */}
-<Route path="/admin/departments" element={<Departments/>} />
-<Route path="/admin/register" element={<RegisterUser/>} />
-<Route path="/admin/units" element={<Units/>} />
-<Route path="/admin/enroll" element={<Enroll/>} />
-{/* HoD */}
-<Route path="/hod/pending" element={<Pending/>} />
-<Route path="/hod/publish" element={<Publish/>} />
-{/* Lecturer */}
-<Route path="/lec/assessments" element={<Assessments/>} />
-<Route path="/lec/grades" element={<Grades/>} />
-{/* Student */}
-<Route path="/student/grades" element={<MyGrades/>} />
-<Route path="/student/report-missing" element={<MissingReport/>} />
-</Routes>
-</AuthProvider>
-)
+// export default function App(){
+// return (
+// <AuthProvider>
+// <Nav/>
+// <Routes>
+// <Route path="/" element={<Home/>} />
+// <Route path="/login" element={<Login/>} />
+// <Route path="/signup" element={<SignupPage/>} />
+// {/* Admin */}
+// <Route path="/admin/departments" element={<Departments/>} />
+// <Route path="/admin/register" element={<RegisterUser/>} />
+// <Route path="/admin/units" element={<Units/>} />
+// <Route path="/admin/enroll" element={<Enroll/>} />
+// {/* HoD */}
+// <Route path="/hod/pending" element={<Pending/>} />
+// <Route path="/hod/publish" element={<Publish/>} />
+// <Route path="/hod/lecturers/new" element={<HodCreateLecturer />} />
+// {/* Lecturer */}
+// <Route path="/lec/assessments" element={<Assessments/>} />
+// <Route path="/lec/grades" element={<Grades/>} />
+// {/* Student */}
+// <Route path="/student/grades" element={<MyGrades/>} />
+// <Route path="/student/report-missing" element={<MissingReport/>} />
+// </Routes>
+// </AuthProvider>
+// )
+// }
+
+
+// src/App.jsx
+import React from 'react';
+import { Routes, Route } from 'react-router-dom';
+
+import Home from './pages/Home';
+import Login from './pages/LoginPage';
+import Departments from './Admin/pages/Departments';
+import RegisterUser from './Admin/RegisterUser';
+import Units from './Admin/pages/Units';
+import Enroll from './Admin/pages/Enroll';
+import Pending from './Admin/pages/Pending';
+import Publish from './Admin/pages/Publish';
+import Assessments from './Admin/pages/Assessments';
+import Grades from './Admin/pages/Grades';
+import MyGrades from './Admin/pages/MyGrades';
+import MissingReport from './Admin/pages/MissingReport';
+import Nav from './components/Navbar';
+import SignupPage from './pages/auth/SignupPage';
+import HodCreateLecturer from './Admin/pages/HodCreateLecturer';
+
+// ⬇️ Student dashboard shell + page (added)
+import StudentLayout from './pages/students/dashboard/StudentLayout';
+import StudentDashboard from './pages/students/dashboard/StudentDashboard';
+
+export default function App() {
+  return (
+    <>
+      <Nav />
+      <Routes>
+        <Route path="/" element={<Home />} />
+
+        {/* Auth */}
+        <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<SignupPage />} />
+
+        {/* Admin */}
+        <Route path="/admin/departments" element={<Departments />} />
+        <Route path="/admin/register" element={<RegisterUser />} />
+        <Route path="/admin/units" element={<Units />} />
+        <Route path="/admin/enroll" element={<Enroll />} />
+
+        {/* HoD */}
+        <Route path="/hod/pending" element={<Pending />} />
+        <Route path="/hod/publish" element={<Publish />} />
+        <Route path="/hod/lecturers/new" element={<HodCreateLecturer />} />
+
+        {/* Lecturer */}
+        <Route path="/lec/assessments" element={<Assessments />} />
+        <Route path="/lec/grades" element={<Grades />} />
+
+        {/* Student */}
+        {/* Existing routes kept intact */}
+        <Route path="/student/grades" element={<MyGrades />} />
+        <Route path="/student/report-missing" element={<MissingReport />} />
+        {/* Alias so sidebar (/student/report) also works */}
+        <Route path="/student/report" element={<MissingReport />} />
+
+        {/* Student Dashboard (added, no breaking changes) */}
+        <Route path="/student/dashboard" element={<StudentLayout />}>
+          <Route index element={<StudentDashboard />} />
+          {/* You can optionally add nested aliases later:
+              <Route path="grades" element={<MyGrades />} /> */}
+        </Route>
+      </Routes>
+    </>
+  );
 }
