@@ -212,10 +212,11 @@ export default function Navbar() {
           </Link> */}
         </div>
 
-        {/* Role-based menu (identical routes/labels as you had) */}
+        {/* Role-based menu (identical routes/labels as you had)
         <div className="flex flex-wrap items-center gap-1 sm:gap-2">
           {role === "admin" && (
             <>
+              <Link to="/admin/dashboard" className="px-3 py-2 text-sm sm:text-base font-medium text-gray-800 hover:text-green-700 transition">dashboard</Link>
               <Link to="/admin/departments" className="px-3 py-2 text-sm sm:text-base font-medium text-gray-800 hover:text-green-700 transition">Departments</Link>
               <Link to="/admin/register" className="px-3 py-2 text-sm sm:text-base font-medium text-gray-800 hover:text-green-700 transition">Create User</Link>
               <Link to="/admin/units" className="px-3 py-2 text-sm sm:text-base font-medium text-gray-800 hover:text-green-700 transition">Units</Link>
@@ -236,7 +237,7 @@ export default function Navbar() {
               <Link to="/lec/assessments" className="px-3 py-2 text-sm sm:text-base font-medium text-gray-800 hover:text-green-700 transition">Assessments</Link>
               <Link to="/lec/grades" className="px-3 py-2 text-sm sm:text-base font-medium text-gray-800 hover:text-green-700 transition">Enter Grades</Link>
             </>
-          )}
+          )} */}
 
           {/* {role === "student" && (
             <>
@@ -244,7 +245,7 @@ export default function Navbar() {
               <Link to="/student/report-missing" className="px-3 py-2 text-sm sm:text-base font-medium text-gray-800 hover:text-green-700 transition">Report Missing</Link>
             </>
           )} */}
-        </div>
+        {/* </div> */}
 
         {/* Auth controls (right side) — unchanged logic */}
         <div className="ml-auto flex items-center gap-3">

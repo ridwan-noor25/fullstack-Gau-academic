@@ -1,48 +1,3 @@
-# from datetime import datetime
-# from flask_sqlalchemy import SQLAlchemy
-# from werkzeug.security import generate_password_hash, check_password_hash
-
-# # Global SQLAlchemy instance (initialized in run.py)
-# db = SQLAlchemy()
-
-# class Student(db.Model):
-#     __tablename__ = "students"
-
-#     id = db.Column(db.Integer, primary_key=True)
-#     name = db.Column(db.String(120), nullable=False)
-#     reg_number = db.Column(db.String(50), unique=True, nullable=False)
-#     course = db.Column(db.String(120), nullable=False)
-#     email = db.Column(db.String(120), unique=True, nullable=False)
-#     password_hash = db.Column(db.String(255), nullable=False)
-#     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
-
-#     # Security helpers
-#     def set_password(self, raw_password: str) -> None:
-#         self.password_hash = generate_password_hash(raw_password)
-
-#     def check_password(self, raw_password: str) -> bool:
-#         return check_password_hash(self.password_hash, raw_password)
-
-#     def to_dict(self):
-#         return {
-#             "id": self.id,
-#             "name": self.name,
-#             "reg_number": self.reg_number,
-#             "course": self.course,
-#             "email": self.email,
-#             "created_at": self.created_at.isoformat(),
-#         }
-
-#     def __repr__(self) -> str:
-#         return f"<Student {self.reg_number}>"
-
-
-
-
-
-
-
-
 # app/models.py
 from __future__ import annotations
 
@@ -78,7 +33,7 @@ class Department(TimestampMixin, db.Model):
         back_populates="department",
         foreign_keys="User.department_id",
         lazy="selectin",
-        cascade="save-update",
+        cascade="all, delete-orphan",          # fix SAWarning
         passive_deletes=True,
     )
 
@@ -95,7 +50,7 @@ class Department(TimestampMixin, db.Model):
         back_populates="department",
         foreign_keys="Unit.department_id",
         lazy="selectin",
-        cascade="save-update",
+        cascade="all, delete-orphan",          # fix SAWarning
         passive_deletes=True,
     )
 
@@ -118,6 +73,10 @@ class User(TimestampMixin, db.Model):
     name = db.Column(db.String(120), nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False, index=True)
     _password_hash = db.Column("password_hash", db.String(256), nullable=False)
+
+    # Optional student details (safe additions)
+    reg_number = db.Column(db.String(64), unique=True, nullable=True, index=True)
+    program = db.Column(db.String(160), nullable=True)  # a.k.a. course/degree name
 
     # Roles: admin | hod | lecturer | student
     role = db.Column(db.String(32), nullable=False, default="student", index=True)
@@ -149,7 +108,7 @@ class User(TimestampMixin, db.Model):
         back_populates="lecturer",
         foreign_keys="TeachingAssignment.lecturer_id",
         lazy="selectin",
-        cascade="save-update, delete-orphan",
+        cascade="all, delete-orphan",          # fix SAWarning
         passive_deletes=True,
     )
 
@@ -159,7 +118,7 @@ class User(TimestampMixin, db.Model):
         back_populates="student",
         foreign_keys="Enrollment.student_id",
         lazy="selectin",
-        cascade="save-update, delete-orphan",
+        cascade="all, delete-orphan",          # fix SAWarning
         passive_deletes=True,
     )
 
@@ -199,6 +158,8 @@ class User(TimestampMixin, db.Model):
             "email": self.email,
             "role": self.role,
             "department_id": self.department_id,
+            "reg_number": self.reg_number,
+            "program": self.program,
         }
 
     def __repr__(self) -> str:
@@ -229,7 +190,7 @@ class Unit(TimestampMixin, db.Model):
         back_populates="unit",
         foreign_keys="TeachingAssignment.unit_id",
         lazy="selectin",
-        cascade="save-update, delete-orphan",
+        cascade="all, delete-orphan",          # fix SAWarning
         passive_deletes=True,
     )
 
@@ -238,7 +199,7 @@ class Unit(TimestampMixin, db.Model):
         back_populates="unit",
         foreign_keys="Enrollment.unit_id",
         lazy="selectin",
-        cascade="save-update, delete-orphan",
+        cascade="all, delete-orphan",          # fix SAWarning
         passive_deletes=True,
     )
 
@@ -247,7 +208,7 @@ class Unit(TimestampMixin, db.Model):
         back_populates="unit",
         foreign_keys="Assessment.unit_id",
         lazy="selectin",
-        cascade="save-update, delete-orphan",
+        cascade="all, delete-orphan",          # fix SAWarning
         passive_deletes=True,
     )
 
@@ -324,7 +285,11 @@ class Enrollment(TimestampMixin, db.Model):
     )
 
     def to_dict(self) -> dict:
-        return {"id": self.id, "student_id": self.student_id, "unit_id": self.unit_id}
+        return {
+            "id": self.id,
+            "student_id": self.student_id,
+            "unit_id": self.unit_id,
+        }
 
 
 class Assessment(TimestampMixin, db.Model):
@@ -341,6 +306,10 @@ class Assessment(TimestampMixin, db.Model):
         db.Integer, db.ForeignKey("users.id", ondelete="SET NULL"), nullable=True
     )
 
+    # NEW (from your added snippet; safe optional fields)
+    due_at = db.Column(db.DateTime, nullable=True)
+    is_published = db.Column(db.Boolean, nullable=False, default=False)
+
     unit = db.relationship(
         "Unit", back_populates="assessments", foreign_keys=[unit_id], lazy="selectin"
     )
@@ -353,7 +322,7 @@ class Assessment(TimestampMixin, db.Model):
         back_populates="assessment",
         foreign_keys="Grade.assessment_id",
         lazy="selectin",
-        cascade="save-update, delete-orphan",
+        cascade="all, delete-orphan",          # fix SAWarning
         passive_deletes=True,
     )
 
@@ -365,6 +334,8 @@ class Assessment(TimestampMixin, db.Model):
             "max_score": self.max_score,
             "weight": self.weight,
             "created_by": self.created_by,
+            "due_at": self.due_at.isoformat() if self.due_at else None,
+            "is_published": self.is_published,
         }
 
 
@@ -425,17 +396,36 @@ class MissingMarkReport(TimestampMixin, db.Model):
     unit_id = db.Column(
         db.Integer, db.ForeignKey("units.id", ondelete="CASCADE"), nullable=False
     )
+
+    # Kept for backward compatibility
     description = db.Column(db.Text, nullable=True)
+
+    # NEW richer fields (safe additions)
+    assessment_id = db.Column(
+        db.Integer, db.ForeignKey("assessments.id", ondelete="SET NULL"), nullable=True
+    )
+    message = db.Column(db.Text, nullable=True)
+    proof_url = db.Column(db.String(500), nullable=True)
+    status = db.Column(db.String(32), nullable=False, default="Pending")  # Pending/Seen/Resolved
+    lecturer_note = db.Column(db.Text, nullable=True)
 
     student = db.relationship("User", foreign_keys=[student_id], lazy="selectin")
     unit = db.relationship("Unit", foreign_keys=[unit_id], lazy="selectin")
+    assessment = db.relationship("Assessment", foreign_keys=[assessment_id], lazy="selectin")
 
     def to_dict(self) -> dict:
         return {
             "id": self.id,
             "student_id": self.student_id,
             "unit_id": self.unit_id,
+            # legacy field
             "description": self.description,
+            # richer API
+            "assessment_id": self.assessment_id,
+            "message": self.message,
+            "proof_url": self.proof_url,
+            "status": self.status,
+            "lecturer_note": self.lecturer_note,
             "created_at": self.created_at.isoformat() if self.created_at else None,
         }
 

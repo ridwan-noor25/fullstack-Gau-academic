@@ -35,7 +35,7 @@ deactivate () {
 # unset irrelevant variables
 deactivate nondestructive
 
-VIRTUAL_ENV="/home/ridwannoor/development/code/phase-5/fullstack-Gau-academic/backend/.venv"
+VIRTUAL_ENV="/home/ridwannoor/fullstack-Gau-academic/backend/.venv"
 export VIRTUAL_ENV
 
 _OLD_VIRTUAL_PATH="$PATH"
