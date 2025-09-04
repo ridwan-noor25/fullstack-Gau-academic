@@ -15,7 +15,7 @@ export default function LoginPage() {
     if (role === "student") return "/student/dashboard";
     if (role === "admin") return "/admin/dashboard";
     if (role === "hod") return "/hod/dashboard";
-    if (role === "lecturer") return "/lecturers/dashboard";
+    if (role === "lecturer") return "/lecturer/dashboard";
   };
 
   // If someone visits /login while already authenticated, push them to their dashboard

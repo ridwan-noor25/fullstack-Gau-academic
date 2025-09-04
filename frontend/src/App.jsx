@@ -350,37 +350,35 @@ import Home from "./pages/Home";
 import Login from "./pages/LoginPage";
 import SignupPage from "./pages/auth/SignupPage";
 
-// Admin
+// ===================== ADMIN =====================
 import AdminShell from "./Admin/layout/AdminShell";
 import AdminDashboard from "./Admin/layout/AdminDashboard";
 import Departments from "./Admin/pages/Departments";
 import RegisterUser from "./Admin/RegisterUser";
-import Units from "./Admin/pages/Units";
+import AdminUnits from "./Admin/pages/Units";            // <-- alias to avoid name clash
 import Enroll from "./Admin/pages/Enroll";
 import Pending from "./Admin/pages/Pending";
 import Publish from "./Admin/pages/Publish";
 import DepartmentsOverview from "./Admin/pages/DepartmentsOverview";
 
-// HOD
+// ===================== LECTURER =====================
+import LecturerLayout from "./pages/lecturers/LecturerLayout";
+import LecturerDashboard from "./pages/lecturers/LecturerDashboard";
+import LecUnits from "./pages/lecturers/Units";
+import UnitAssessments from "./pages/lecturers/UnitAssessments";
+import UnitStudents from "./pages/lecturers/UnitStudents";
+import MissingReports from "./pages/lecturers/MissingReports";
 
-
-// Lecturer
-import Assessments from "./Admin/pages/Assessments";
-import Grades from "./Admin/pages/Grades";
-import Courses from "./pages/lecturers/Courses";
-import Dashboard from "./pages/lecturers/Dashboard"
-import Gradebook from "./pages/lecturers/Gradebook"
-import MissingMarks from "./pages/lecturers/MissingMarks"
-import Nortification from "./pages/lecturers/Notifications"
-import Profile from "./pages/lecturers/Profile"
-
-
-// Student (dashboard shell + pages)
+// ===================== STUDENT =====================
 import StudentLayout from "./pages/students/dashboard/StudentLayout";
 import StudentDashboard from "./pages/students/dashboard/StudentDashboard";
 import MissingReport from "./Admin/pages/MissingReport";  // existing page
-import HodDashboard from "./components/hod/Dashboard";
 
+// ===================== HOD =====================
+import HodDashboard from "./components/hod/Dashboard";
+import MyGrades from "./pages/students/MyGrades";
+
+// 404
 const NotFound = () => (
   <div className="p-10 text-center">
     <h1 className="text-2xl font-bold text-green-800">404 — Not Found</h1>
@@ -405,42 +403,36 @@ export default function App() {
           <Route path="dashboard" element={<AdminDashboard />} />
           <Route path="departments" element={<Departments />} />
           <Route path="register" element={<RegisterUser />} />
-          <Route path="units" element={<Units />} />
+          <Route path="adminunits" element={<AdminUnits />} />    {/* aliased */}
           <Route path="enroll" element={<Enroll />} />
           <Route path="pending" element={<Pending />} />
           <Route path="publish" element={<Publish />} />
           <Route path="overview" element={<DepartmentsOverview />} />
         </Route>
 
-
-               {/* HoD */}
-           <Route path="/hod/pending" element={<Pending />} />
-            <Route path="/hod/dashboard" element={<HodDashboard />} />
-           <Route path="/hod/publish" element={<Publish />} />
+        {/* ===================== HOD ===================== */}
+        <Route path="/hod/dashboard" element={<HodDashboard />} />
+        <Route path="/hod/pending" element={<Pending />} />
+        <Route path="/hod/publish" element={<Publish />} />
 
         {/* ===================== LECTURER ===================== */}
-        <Route path="/lec/assessments" element={<Assessments />} />
-        <Route path="/lec/grades" element={<Grades />} />
-        <Route path="/lecturers/courses" element={<Courses/>} />
-        <Route path="/lecturers/dashboard" element={<Dashboard/>} />
-        <Route path="/lecturers/gradebook" element={<Gradebook/>} />
-        <Route path="/lecturers/missingmarks" element={<MissingMarks/>} />
-        <Route path="/lecturers/nortification" element={<Nortification/>} />
-        <Route path="/lecturers/profile" element={<Profile/>}></Route>
+        <Route path="/lecturer" element={<LecturerLayout />}>
+          <Route index element={<Navigate to="dashboard" replace />} />
+          <Route path="dashboard" element={<LecturerDashboard />} />
+          <Route path="/lecturer/units" element={<LecUnits />} />
+          <Route path="units/:unitId/assessments" element={<UnitAssessments />} />
+          <Route path="units/:unitId/students" element={<UnitStudents />} />
+          <Route path="missing-reports" element={<MissingReports />} />
+        </Route>
 
         {/* ===================== STUDENT ===================== */}
-        {/* Mount Student layout at /student so children render inside its <Outlet /> */}
         <Route path="/student" element={<StudentLayout />}>
           {/* default -> /student/dashboard */}
           <Route index element={<Navigate to="dashboard" replace />} />
 
           <Route path="dashboard" element={<StudentDashboard />} />
-
-          {/* My Grades (primary) */}
-          {/* Backward-compat: send /student/viewgrades to /student/grades */}
-          <Route path="viewgrades" element={<Navigate to="../grades" replace />} />
-
-          {/* Existing missing report routes */}
+          <Route path="grades" element={<MyGrades />} />                 {/* added */}
+          <Route path="viewgrades" element={<Navigate to="../grades" replace />} /> {/* keeps your alias */}
           <Route path="report-missing" element={<MissingReport />} />
           <Route path="report" element={<MissingReport />} />
         </Route>
