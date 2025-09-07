@@ -344,6 +344,7 @@ import React from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 
 import Nav from "./components/Navbar";
+import Footer from "./components/Footer"; // ⬅️ stays
 
 // Public / common pages
 import Home from "./pages/Home";
@@ -355,7 +356,7 @@ import AdminShell from "./Admin/layout/AdminShell";
 import AdminDashboard from "./Admin/layout/AdminDashboard";
 import Departments from "./Admin/pages/Departments";
 import RegisterUser from "./Admin/RegisterUser";
-import AdminUnits from "./Admin/pages/Units";            // <-- alias to avoid name clash
+import AdminUnits from "./Admin/pages/Units"; // alias to avoid name clash
 import Enroll from "./Admin/pages/Enroll";
 import Pending from "./Admin/pages/Pending";
 import Publish from "./Admin/pages/Publish";
@@ -372,10 +373,14 @@ import MissingReports from "./pages/lecturers/MissingReports";
 // ===================== STUDENT =====================
 import StudentLayout from "./pages/students/dashboard/StudentLayout";
 import StudentDashboard from "./pages/students/dashboard/StudentDashboard";
-import MissingReport from "./Admin/pages/MissingReport";  // existing page
+import MissingReport from "./Admin/pages/MissingReport";
 
-// ===================== HOD =====================
-import HodDashboard from "./components/hod/Dashboard";
+// ===================== HOD (NEW) =====================
+import HodLayout from "./pages/hod/HodLayout";
+import HodDashboard from "./pages/hod/HodDashboard";
+import HodLecturers from "./pages/hod/HodLecturers";
+import HodUnits from "./pages/hod/HodUnits";
+
 import MyGrades from "./pages/students/MyGrades";
 
 // 404
@@ -403,23 +408,26 @@ export default function App() {
           <Route path="dashboard" element={<AdminDashboard />} />
           <Route path="departments" element={<Departments />} />
           <Route path="register" element={<RegisterUser />} />
-          <Route path="adminunits" element={<AdminUnits />} />    {/* aliased */}
+          <Route path="adminunits" element={<AdminUnits />} /> {/* aliased */}
           <Route path="enroll" element={<Enroll />} />
           <Route path="pending" element={<Pending />} />
           <Route path="publish" element={<Publish />} />
           <Route path="overview" element={<DepartmentsOverview />} />
         </Route>
 
-        {/* ===================== HOD ===================== */}
-        <Route path="/hod/dashboard" element={<HodDashboard />} />
-        <Route path="/hod/pending" element={<Pending />} />
-        <Route path="/hod/publish" element={<Publish />} />
+        {/* ===================== HOD (sidebar layout + pages) ===================== */}
+        <Route path="/hod" element={<HodLayout />}>
+          <Route index element={<Navigate to="dashboard" replace />} />
+          <Route path="dashboard" element={<HodDashboard />} />
+          <Route path="lecturers" element={<HodLecturers />} />
+          <Route path="units" element={<HodUnits />} />
+        </Route>
 
         {/* ===================== LECTURER ===================== */}
         <Route path="/lecturer" element={<LecturerLayout />}>
           <Route index element={<Navigate to="dashboard" replace />} />
           <Route path="dashboard" element={<LecturerDashboard />} />
-          <Route path="/lecturer/units" element={<LecUnits />} />
+          <Route path="units" element={<LecUnits />} />
           <Route path="units/:unitId/assessments" element={<UnitAssessments />} />
           <Route path="units/:unitId/students" element={<UnitStudents />} />
           <Route path="missing-reports" element={<MissingReports />} />
@@ -427,12 +435,10 @@ export default function App() {
 
         {/* ===================== STUDENT ===================== */}
         <Route path="/student" element={<StudentLayout />}>
-          {/* default -> /student/dashboard */}
           <Route index element={<Navigate to="dashboard" replace />} />
-
           <Route path="dashboard" element={<StudentDashboard />} />
-          <Route path="grades" element={<MyGrades />} />                 {/* added */}
-          <Route path="viewgrades" element={<Navigate to="../grades" replace />} /> {/* keeps your alias */}
+          <Route path="grades" element={<MyGrades />} />
+          <Route path="viewgrades" element={<Navigate to="../grades" replace />} />
           <Route path="report-missing" element={<MissingReport />} />
           <Route path="report" element={<MissingReport />} />
         </Route>
@@ -440,6 +446,8 @@ export default function App() {
         {/* Fallback */}
         <Route path="*" element={<NotFound />} />
       </Routes>
+
+      <Footer />
     </>
   );
 }

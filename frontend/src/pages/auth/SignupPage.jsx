@@ -243,9 +243,9 @@ function SignupPage() {
         <div className="w-full max-w-2xl">
           {/* Page Heading */}
           <div className="mb-5">
-            <span className="inline-block text-[10px] uppercase tracking-widest text-green-700/80 bg-white px-2.5 py-1 rounded-full">
+            {/* <span className="inline-block text-[10px] uppercase tracking-widest text-green-700/80 bg-white px-2.5 py-1 rounded-full">
               GAU-GradeView
-            </span>
+            </span> */}
             <h1 className="mt-2 text-2xl md:text-3xl font-extrabold text-green-900">
               Create Your Account
             </h1>
