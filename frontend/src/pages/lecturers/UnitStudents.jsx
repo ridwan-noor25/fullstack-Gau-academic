@@ -1,7 +1,50 @@
 // src/pages/lecturers/UnitStudents.jsx
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { getUnitStudents } from "../../utils/lecturerApi";
+
+/* ---------- helpers to normalize fields across API variations ---------- */
+
+function pickFirst(obj, keys = []) {
+  for (const k of keys) {
+    const v = obj?.[k];
+    if (v !== undefined && v !== null && String(v).trim() !== "" && String(v).trim() !== "_" && String(v).toLowerCase() !== "null" && String(v).toLowerCase() !== "undefined") {
+      return String(v);
+    }
+  }
+  return "";
+}
+
+function titleCase(str) {
+  return str
+    .toLowerCase()
+    .split(/\s+/)
+    .map(s => s.charAt(0).toUpperCase() + s.slice(1))
+    .join(" ");
+}
+
+function cleanName(s) {
+  if (!s) return "";
+  // replace underscores with spaces, collapse spaces
+  const spaced = s.replace(/_/g, " ").replace(/\s+/g, " ").trim();
+  // avoid showing emails as-is; if it's an email, use part before @
+  if (/^[^@\s]+@[^@\s]+$/.test(spaced)) {
+    return titleCase(spaced.split("@")[0].replace(/[._-]+/g, " "));
+  }
+  return titleCase(spaced);
+}
+
+function cleanRegNo(s) {
+  if (!s) return "";
+  let t = String(s).trim();
+  // many backends store with underscores; prefer slash or dash
+  if (t.includes("_")) t = t.replace(/_+/g, "/");
+  // collapse spaces; uppercase for consistency
+  t = t.replace(/\s+/g, " ").toUpperCase();
+  // treat lone underscore/placeholder as empty
+  if (t === "_" || t.toLowerCase() === "null" || t.toLowerCase() === "undefined") return "";
+  return t;
+}
 
 export default function UnitStudents() {
   const { unitId } = useParams();
@@ -11,14 +54,71 @@ export default function UnitStudents() {
 
   useEffect(() => {
     let on = true;
-    setLoading(true);
-    setErr("");
-    getUnitStudents(unitId)
-      .then((es) => on && setItems(es))
-      .catch((e) => on && setErr(e.message || "Failed to load students"))
-      .finally(() => on && setLoading(false));
-    return () => (on = false);
+    async function load() {
+      setLoading(true);
+      setErr("");
+      try {
+        const res = await getUnitStudents(unitId);
+        if (!on) return;
+        setItems(Array.isArray(res) ? res : []);
+      } catch (e) {
+        if (on) setErr(e.message || "Failed to load students");
+      } finally {
+        if (on) setLoading(false);
+      }
+    }
+    load();
+    return () => { on = false; };
   }, [unitId]);
+
+  // Normalize to consistent display rows regardless of server shape
+  const rows = useMemo(() => {
+    return (items || []).map((it) => {
+      // API may return enrollments with nested student, or flat student objects
+      const s = it?.student ?? it;
+
+      // Build name from multiple possible shapes
+      const first = pickFirst(s, ["first_name", "firstname", "given_name", "firstName", "givenName"]);
+      const last  = pickFirst(s, ["last_name", "lastname", "surname", "family_name", "lastName", "familyName"]);
+      const fullFromParts = [first, last].filter(Boolean).join(" ");
+
+      const rawName =
+        fullFromParts ||
+        pickFirst(s, ["full_name", "fullName", "display_name", "displayName", "name", "student_name", "studentName", "username", "user_name", "email"]);
+
+      const name = cleanName(rawName) || "—";
+
+      // Build reg no from many possible keys
+      const rawReg =
+        pickFirst(s, [
+          "reg_number",
+          "reg_no",
+          "registration_number",
+          "registrationNo",
+          "regNumber",
+          "regNo",
+          "reg",
+          "regno",
+          "student_reg_no",
+          "studentRegNo",
+        ]);
+
+      const reg = cleanRegNo(rawReg) || "—";
+
+      // Choose a stable key
+      const key = String(
+        it?.id ??
+        it?.enrollment_id ??
+        s?.id ??
+        `${name}-${reg}-${Math.random()}`
+      );
+
+      // Also show email nicely if present
+      const email = pickFirst(s, ["email", "student_email", "studentEmail"]) || "—";
+
+      return { key, name, reg, email };
+    });
+  }, [items]);
 
   if (loading) {
     return (
@@ -32,12 +132,15 @@ export default function UnitStudents() {
     <>
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-semibold text-gray-900">Students — Unit #{unitId}</h2>
-        <Link
-          to={`/lecturer/units/${unitId}/assessments`}
-          className="text-sm px-3 py-1.5 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-50"
-        >
-          Assessments
-        </Link>
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-gray-600">{rows.length} enrolled</span>
+          <Link
+            to={`/lecturer/units/${unitId}/assessments`}
+            className="text-sm px-3 py-1.5 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-50"
+          >
+            Assessments
+          </Link>
+        </div>
       </div>
 
       {err && (
@@ -56,18 +159,18 @@ export default function UnitStudents() {
             </tr>
           </thead>
           <tbody className="divide-y">
-            {items.length === 0 && (
+            {rows.length === 0 && (
               <tr>
                 <td colSpan="3" className="px-5 py-6 text-center text-gray-500">
                   No students enrolled.
                 </td>
               </tr>
             )}
-            {items.map((e) => (
-              <tr key={e.id}>
-                <Td className="font-medium">{e.student?.name || "—"}</Td>
-                <Td>{e.student?.reg_number || "—"}</Td>
-                <Td>{e.student?.email || "—"}</Td>
+            {rows.map((r) => (
+              <tr key={r.key}>
+                <Td className="font-medium">{r.name}</Td>
+                <Td>{r.reg}</Td>
+                <Td>{r.email}</Td>
               </tr>
             ))}
           </tbody>

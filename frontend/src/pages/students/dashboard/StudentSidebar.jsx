@@ -1,149 +1,156 @@
-// // src/pages/students/dashboard/StudentSidebar.jsx
-// import { Link, useLocation } from 'react-router-dom';
-// import {
-//   HomeIcon, AcademicCapIcon, ChartBarIcon, ExclamationCircleIcon,
-//   UserCircleIcon, Cog6ToothIcon, ArrowRightOnRectangleIcon,
-// } from '@heroicons/react/24/outline';
-
-// const StudentSidebar = ({ onNavigate }) => {
-//   const location = useLocation();
-//   const navigation = [
-//     { name: 'Dashboard', href: '/student/dashboard', icon: HomeIcon },
-//     { name: 'My Grades', href: '/student/grades', icon: AcademicCapIcon },
-//     { name: 'GPA Summary', href: '/student/gpa', icon: ChartBarIcon },
-//     { name: 'Report Missing Mark', href: '/student/report', icon: ExclamationCircleIcon },
-//     { name: 'Profile', href: '/student/profile', icon: UserCircleIcon },
-//     { name: 'Settings', href: '/student/settings', icon: Cog6ToothIcon },
-//   ];
-//   const isActive = (p) => location.pathname === p || location.pathname.startsWith(p + '/');
-
-//   const handleLogout = () => {
-//     localStorage.removeItem('token');
-//     localStorage.removeItem('student');
-//     window.location.href = '/login';
-//   };
-
-//   return (
-//     <div className="flex flex-col h-full bg-white w-64 border-r border-gray-800">
-//       {/* Brand */}
-//       <div className="flex items-center justify-center h-16 px-4 border-b bg-white">
-//         <div className="text-black text-center">
-//           <h1 className="font-bold text-lg">GAU-GradeView</h1>
-//           <p className="text-xs text-black-100">Student Portal</p>
-//         </div>
-//       </div>
-
-//       {/* Nav */}
-//       <nav className="flex-1 px-2 py-4 space-y-1 overflow-y-auto">
-//         {navigation.map((item) => {
-//           const active = isActive(item.href);
-//           return (
-//             <Link
-//               key={item.name}
-//               to={item.href}
-//               onClick={onNavigate}
-//               className={`flex items-center gap-3 px-4 py-2 rounded-md transition
-//                 ${active
-//                   ? 'bg-gray-100 text-green-800 font-semibold border-l-4 border-green-700'
-//                   : 'text-gray-700 hover:bg-gray-100'}`}
-//             >
-//               <item.icon className="w-5 h-5" />
-//               {item.name}
-//             </Link>
-//           );
-//         })}
-//         <button
-//           onClick={handleLogout}
-//           className="w-full flex items-center gap-3 px-4 py-2 rounded-md text-gray-700 hover:bg-gray-100 transition"
-//         >
-//           <ArrowRightOnRectangleIcon className="w-5 h-5" />
-//           Logout
-//         </button>
-//       </nav>
-
-//       <div className="flex-shrink-0 border-t border-gray-200 p-4">
-//         <p className="text-xs text-gray-500">Garissa University · GAU-GradeView</p>
-//       </div>
-//     </div>
-//   );
-// };
-
-// export default StudentSidebar;
-
-
 // src/pages/students/dashboard/StudentSidebar.jsx
-import { Link, useLocation } from 'react-router-dom';
+import React from "react";
+import { NavLink, useNavigate } from "react-router-dom";
 import {
-  HomeIcon, AcademicCapIcon, ChartBarIcon, ExclamationCircleIcon,
-  UserCircleIcon, Cog6ToothIcon, ArrowRightOnRectangleIcon,
-} from '@heroicons/react/24/outline';
+  Squares2X2Icon,
+  BookOpenIcon,
+  ClipboardDocumentListIcon,
+  FlagIcon,
+  UserCircleIcon,
+  Cog6ToothIcon,
+  ChevronDoubleLeftIcon,
+  ArrowRightOnRectangleIcon,
+  XMarkIcon,
+} from "@heroicons/react/24/outline";
 
-const StudentSidebar = ({ onNavigate }) => {
-  const location = useLocation();
-  const navigation = [
-    { name: 'Dashboard', href: '/student/dashboard', icon: HomeIcon },
-    { name: 'My Grades', href: '/student/grades', icon: AcademicCapIcon },
-    { name: 'GPA Summary', href: '/student/gpa', icon: ChartBarIcon },
-    { name: 'Report Missing Mark', href: '/student/report', icon: ExclamationCircleIcon },
-    { name: 'Profile', href: '/student/profile', icon: UserCircleIcon },
-    { name: 'Settings', href: '/student/settings', icon: Cog6ToothIcon },
-  ];
-  const isActive = (p) => location.pathname === p || location.pathname.startsWith(p + '/');
+const nav = [
+  { to: "/student/dashboard", label: "Dashboard", icon: Squares2X2Icon },
+  { to: "/student/enroll", label: "Enroll Units", icon: BookOpenIcon },
+  { to: "/student/grades", label: "My Grades", icon: ClipboardDocumentListIcon },
+  { to: "/student/report", label: "Missing Marks", icon: FlagIcon },
+  { to: "/student/profile", label: "Profile", icon: UserCircleIcon },
+  { to: "/student/settings", label: "Settings", icon: Cog6ToothIcon },
+];
 
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('student');
-    localStorage.removeItem('user');
-    localStorage.removeItem('role');
-    window.location.href = '/login';
+export default function StudentSidebar({ open, onClose }) {
+  const navigate = useNavigate();
+  const logout = () => {
+    localStorage.removeItem("token");
+    navigate("/login");
   };
 
   return (
-    <div className="flex flex-col h-full bg-white w-64 border-r border-gray-800">
-      {/* Brand */}
-      <div className="flex items-center justify-center h-16 px-4 border-b bg-white">
-        <div className="text-black text-center">
-          <h1 className="font-bold text-lg">GAU-GradeView</h1>
-          <p className="text-xs text-black-100">Student Portal</p>
-        </div>
-      </div>
+    <>
+      {/* Desktop rail */}
+      <aside
+        className={`hidden lg:flex shrink-0 transition-all duration-300
+          ${open ? "w-[280px]" : "w-[84px]"}
+          h-full rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden`}
+      >
+        <div className="flex h-full w-full flex-col">
+          <div className="flex items-center justify-between px-4 py-4 border-b">
+            <div className="flex items-center gap-3">
+              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-green-100 text-green-700 font-bold">
+                S
+              </div>
+              {open && (
+                <div className="leading-tight">
+                  <div className="text-sm font-semibold text-gray-900">Student</div>
+                  <div className="text-xs text-gray-500">GAU Portal</div>
+                </div>
+              )}
+            </div>
+            {open && (
+              <button
+                onClick={onClose}
+                className="ml-2 inline-flex items-center rounded-lg border px-2.5 py-1.5 text-gray-600 hover:bg-gray-50"
+                title="Collapse"
+                aria-label="Collapse"
+              >
+                <ChevronDoubleLeftIcon className="h-5 w-5" />
+              </button>
+            )}
+          </div>
 
-      {/* Nav */}
-      <nav className="flex-1 px-2 py-4 space-y-1 overflow-y-auto">
-        {navigation.map((item) => {
-          const active = isActive(item.href);
-          return (
-            <Link
-              key={item.name}
-              to={item.href}
-              onClick={onNavigate}
-              className={`flex items-center gap-3 px-4 py-2 rounded-md transition
-                ${active
-                  ? 'bg-gray-100 text-green-800 font-semibold border-l-4 border-green-700'
-                  : 'text-gray-700 hover:bg-gray-100'}`}
+          <nav className="flex-1 overflow-y-auto py-3">
+            {nav.map(({ to, label, icon: Icon }) => (
+              <NavLink
+                key={to}
+                to={to}
+                className={({ isActive }) =>
+                  `group mx-2 my-1 flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition
+                  ${
+                    isActive
+                      ? "bg-green-50 text-green-800"
+                      : "text-gray-700 hover:bg-gray-50 hover:text-gray-900"
+                  }`
+                }
+              >
+                <Icon className="h-5 w-5 shrink-0" />
+                {open && <span className="truncate">{label}</span>}
+              </NavLink>
+            ))}
+          </nav>
+
+          <div className="px-3 py-3 border-t">
+            <button
+              onClick={logout}
+              className="w-full inline-flex items-center justify-center gap-2 rounded-xl border px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+              title="Logout"
             >
-              <item.icon className="w-5 h-5" />
-              {item.name}
-            </Link>
-          );
-        })}
-        <button
-          onClick={handleLogout}
-          className="w-full flex items-center gap-3 px-4 py-2 rounded-md text-gray-700 hover:bg-gray-100 transition"
-        >
-          <ArrowRightOnRectangleIcon className="w-5 h-5" />
-          Logout
-        </button>
-      </nav>
+              <ArrowRightOnRectangleIcon className="h-5 w-5" />
+              {open && <span>Logout</span>}
+            </button>
+          </div>
+        </div>
+      </aside>
 
-      <div className="flex-shrink-0 border-t border-gray-200 p-4">
-        <p className="text-xs text-gray-500">Garissa University · GAU-GradeView</p>
+      {/* Mobile drawer */}
+      <div className={`lg:hidden fixed inset-0 z-40 transition ${open ? "pointer-events-auto" : "pointer-events-none"}`}>
+        <div className={`absolute inset-0 bg-black/30 transition-opacity ${open ? "opacity-100" : "opacity-0"}`} onClick={onClose} />
+        <aside className={`absolute left-0 top-0 h-full w-[280px] bg-white shadow-xl transition-transform duration-300 ${open ? "translate-x-0" : "-translate-x-full"}`}>
+          <div className="flex h-full flex-col">
+            <div className="flex items-center justify-between px-4 py-4 border-b">
+              <div className="flex items-center gap-3">
+                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-green-100 text-green-700 font-bold">S</div>
+                <div className="leading-tight">
+                  <div className="text-sm font-semibold text-gray-900">Student</div>
+                  <div className="text-xs text-gray-500">GAU Portal</div>
+                </div>
+              </div>
+              <button
+                onClick={onClose}
+                className="inline-flex items-center rounded-lg border px-2.5 py-1.5 text-gray-600 hover:bg-gray-50"
+                aria-label="Close menu"
+                title="Close menu"
+              >
+                <XMarkIcon className="h-5 w-5" />
+              </button>
+            </div>
+
+            <nav className="flex-1 overflow-y-auto py-3">
+              {nav.map(({ to, label, icon: Icon }) => (
+                <NavLink
+                  key={to}
+                  to={to}
+                  onClick={onClose}
+                  className={({ isActive }) =>
+                    `group mx-2 my-1 flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition
+                    ${
+                      isActive
+                        ? "bg-green-50 text-green-800"
+                        : "text-gray-700 hover:bg-gray-50 hover:text-gray-900"
+                    }`
+                  }
+                >
+                  <Icon className="h-5 w-5 shrink-0" />
+                  <span className="truncate">{label}</span>
+                </NavLink>
+              ))}
+            </nav>
+
+            <div className="px-3 py-3 border-t">
+              <button
+                onClick={logout}
+                className="w-full inline-flex items-center justify-center gap-2 rounded-xl border px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+              >
+                <ArrowRightOnRectangleIcon className="h-5 w-5" />
+                <span>Logout</span>
+              </button>
+            </div>
+          </div>
+        </aside>
       </div>
-    </div>
+    </>
   );
-};
-
-export default StudentSidebar;
-
-
-
+}

@@ -33,7 +33,7 @@ class Department(TimestampMixin, db.Model):
         back_populates="department",
         foreign_keys="User.department_id",
         lazy="selectin",
-        cascade="all, delete-orphan",          # fix SAWarning
+        cascade="all, delete-orphan",
         passive_deletes=True,
     )
 
@@ -50,7 +50,7 @@ class Department(TimestampMixin, db.Model):
         back_populates="department",
         foreign_keys="Unit.department_id",
         lazy="selectin",
-        cascade="all, delete-orphan",          # fix SAWarning
+        cascade="all, delete-orphan",
         passive_deletes=True,
     )
 
@@ -74,9 +74,9 @@ class User(TimestampMixin, db.Model):
     email = db.Column(db.String(120), unique=True, nullable=False, index=True)
     _password_hash = db.Column("password_hash", db.String(256), nullable=False)
 
-    # Optional student details (safe additions)
+    # Optional student details
     reg_number = db.Column(db.String(64), unique=True, nullable=True, index=True)
-    program = db.Column(db.String(160), nullable=True)  # a.k.a. course/degree name
+    program = db.Column(db.String(160), nullable=True)  # course/degree name
 
     # Roles: admin | hod | lecturer | student
     role = db.Column(db.String(32), nullable=False, default="student", index=True)
@@ -108,7 +108,7 @@ class User(TimestampMixin, db.Model):
         back_populates="lecturer",
         foreign_keys="TeachingAssignment.lecturer_id",
         lazy="selectin",
-        cascade="all, delete-orphan",          # fix SAWarning
+        cascade="all, delete-orphan",
         passive_deletes=True,
     )
 
@@ -118,7 +118,7 @@ class User(TimestampMixin, db.Model):
         back_populates="student",
         foreign_keys="Enrollment.student_id",
         lazy="selectin",
-        cascade="all, delete-orphan",          # fix SAWarning
+        cascade="all, delete-orphan",
         passive_deletes=True,
     )
 
@@ -174,6 +174,10 @@ class Unit(TimestampMixin, db.Model):
     title = db.Column(db.String(200), nullable=False)
     credits = db.Column(db.Integer, nullable=True)
 
+    # NEW: term awareness
+    year_level = db.Column(db.Integer, nullable=True)  # e.g., 1..6
+    semester = db.Column(db.Integer, nullable=True)    # e.g., 1..3
+
     department_id = db.Column(
         db.Integer, db.ForeignKey("departments.id", ondelete="SET NULL"), nullable=True
     )
@@ -190,7 +194,7 @@ class Unit(TimestampMixin, db.Model):
         back_populates="unit",
         foreign_keys="TeachingAssignment.unit_id",
         lazy="selectin",
-        cascade="all, delete-orphan",          # fix SAWarning
+        cascade="all, delete-orphan",
         passive_deletes=True,
     )
 
@@ -199,7 +203,7 @@ class Unit(TimestampMixin, db.Model):
         back_populates="unit",
         foreign_keys="Enrollment.unit_id",
         lazy="selectin",
-        cascade="all, delete-orphan",          # fix SAWarning
+        cascade="all, delete-orphan",
         passive_deletes=True,
     )
 
@@ -208,7 +212,7 @@ class Unit(TimestampMixin, db.Model):
         back_populates="unit",
         foreign_keys="Assessment.unit_id",
         lazy="selectin",
-        cascade="all, delete-orphan",          # fix SAWarning
+        cascade="all, delete-orphan",
         passive_deletes=True,
     )
 
@@ -222,6 +226,8 @@ class Unit(TimestampMixin, db.Model):
             "title": self.title,
             "credits": self.credits,
             "department_id": self.department_id,
+            "year_level": self.year_level,
+            "semester": self.semester,
         }
 
 
@@ -306,7 +312,7 @@ class Assessment(TimestampMixin, db.Model):
         db.Integer, db.ForeignKey("users.id", ondelete="SET NULL"), nullable=True
     )
 
-    # NEW (from your added snippet; safe optional fields)
+    # Optional fields
     due_at = db.Column(db.DateTime, nullable=True)
     is_published = db.Column(db.Boolean, nullable=False, default=False)
 
@@ -322,7 +328,7 @@ class Assessment(TimestampMixin, db.Model):
         back_populates="assessment",
         foreign_keys="Grade.assessment_id",
         lazy="selectin",
-        cascade="all, delete-orphan",          # fix SAWarning
+        cascade="all, delete-orphan",
         passive_deletes=True,
     )
 
@@ -397,10 +403,10 @@ class MissingMarkReport(TimestampMixin, db.Model):
         db.Integer, db.ForeignKey("units.id", ondelete="CASCADE"), nullable=False
     )
 
-    # Kept for backward compatibility
+    # Legacy
     description = db.Column(db.Text, nullable=True)
 
-    # NEW richer fields (safe additions)
+    # Richer fields
     assessment_id = db.Column(
         db.Integer, db.ForeignKey("assessments.id", ondelete="SET NULL"), nullable=True
     )
@@ -418,9 +424,7 @@ class MissingMarkReport(TimestampMixin, db.Model):
             "id": self.id,
             "student_id": self.student_id,
             "unit_id": self.unit_id,
-            # legacy field
             "description": self.description,
-            # richer API
             "assessment_id": self.assessment_id,
             "message": self.message,
             "proof_url": self.proof_url,

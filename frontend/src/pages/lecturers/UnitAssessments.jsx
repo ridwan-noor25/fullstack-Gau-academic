@@ -14,16 +14,18 @@ import {
 
 export default function UnitAssessments() {
   const { unitId } = useParams();
-  const [items, setItems] = useState([]);
-  const [students, setStudents] = useState([]);
-  const [gradesByAssessment, setGradesByAssessment] = useState({});
+
+  const [items, setItems] = useState([]);                // assessments
+  const [students, setStudents] = useState([]);          // normalized students [{id,name,reg_number}]
+  const [gradesByAssessment, setGradesByAssessment] = useState({}); // {assId: { studentId: score }}
+
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState("");
   const [form, setForm] = useState({ title: "", weight: "", max_score: 100, due_at: "" });
 
   // grade editor state
   const [editAss, setEditAss] = useState(null);
-  const [scores, setScores] = useState({}); // student_id -> score
+  const [scores, setScores] = useState({}); // student_id -> score (string/number)
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -39,14 +41,32 @@ export default function UnitAssessments() {
           getUnitGrades(unitId),
         ]);
         if (!on) return;
-        setItems(ass);
-        setStudents(studs.map((e) => e.student)); // Enrollment.to_dict includes student object
-        // build grades map
+
+        // 1) Assessments
+        setItems(Array.isArray(ass) ? ass : []);
+
+        // 2) Tolerant student normalization (Option A)
+        // Accept either [{ student: {...} }] OR [{...}] and normalize to {id, name, reg_number}
+        const normalizedStudents = (Array.isArray(studs) ? studs : [])
+          .map((e) => (e && typeof e === "object" && "student" in e ? e.student : e))
+          .filter(Boolean)
+          .map((s) => ({
+            id: s.id,
+            name: s.name || "Unnamed",
+            reg_number: s.reg_number || "",
+          }));
+        setStudents(normalizedStudents);
+
+        // 3) Build grades map: { assessmentId: { studentId: score } }
         const map = {};
-        gradesPack.forEach(({ assessment, grades }) => {
-          map[assessment.id] = {};
-          grades.forEach((g) => {
-            map[assessment.id][g.student_id] = g.score;
+        (Array.isArray(gradesPack) ? gradesPack : []).forEach(({ assessment, grades }) => {
+          if (!assessment || !assessment.id) return;
+          const aid = assessment.id;
+          map[aid] = {};
+          (Array.isArray(grades) ? grades : []).forEach((g) => {
+            if (g && g.student_id != null) {
+              map[aid][g.student_id] = g.score;
+            }
           });
         });
         setGradesByAssessment(map);
@@ -57,11 +77,13 @@ export default function UnitAssessments() {
       }
     }
     load();
-    return () => (on = false);
+    return () => {
+      on = false;
+    };
   }, [unitId]);
 
   const totalWeight = useMemo(
-    () => items.reduce((acc, x) => acc + (Number(x.weight) || 0), 0),
+    () => (Array.isArray(items) ? items.reduce((acc, x) => acc + (Number(x.weight) || 0), 0) : 0),
     [items]
   );
 
@@ -115,12 +137,17 @@ export default function UnitAssessments() {
   }
 
   function openGrades(a) {
+    if (!a || !a.id) return;
     setEditAss(a);
+
+    // start with existing grades for this assessment (if any)
     const preset = { ...(gradesByAssessment[a.id] || {}) };
-    // ensure keys for all students
-    students.forEach((s) => {
-      if (preset[s.id] == null) preset[s.id] = "";
+
+    // ensure every enrolled student has a key
+    (students || []).forEach((s) => {
+      if (s && s.id != null && preset[s.id] == null) preset[s.id] = "";
     });
+
     setScores(preset);
   }
 
@@ -130,15 +157,26 @@ export default function UnitAssessments() {
     setErr("");
     try {
       const rows = Object.entries(scores)
-        .map(([sid, val]) => ({ student_id: Number(sid), score: val === "" ? 0 : Number(val) }))
+        .map(([sid, val]) => ({
+          student_id: Number(sid),
+          score: val === "" ? 0 : Number(val),
+        }))
         .filter((r) => !Number.isNaN(r.student_id) && !Number.isNaN(r.score));
+
       await upsertGradesBulk(editAss.id, rows);
-      // refresh grades map for that assessment
+
+      // refresh grade map
       const pack = await getUnitGrades(unitId);
       const map = {};
-      pack.forEach(({ assessment, grades }) => {
-        map[assessment.id] = {};
-        grades.forEach((g) => (map[assessment.id][g.student_id] = g.score));
+      (Array.isArray(pack) ? pack : []).forEach(({ assessment, grades }) => {
+        if (!assessment || !assessment.id) return;
+        const aid = assessment.id;
+        map[aid] = {};
+        (Array.isArray(grades) ? grades : []).forEach((g) => {
+          if (g && g.student_id != null) {
+            map[aid][g.student_id] = g.score;
+          }
+        });
       });
       setGradesByAssessment(map);
       setEditAss(null);
@@ -229,9 +267,7 @@ export default function UnitAssessments() {
                         Enter Grades
                       </button>
                       <button
-                        onClick={() =>
-                          onUpdate(a, { is_published: !a.is_published })
-                        }
+                        onClick={() => onUpdate(a, { is_published: !a.is_published })}
                         className="text-xs px-3 py-1.5 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-50"
                       >
                         {a.is_published ? "Unpublish" : "Publish"}
@@ -330,6 +366,7 @@ export default function UnitAssessments() {
                 Close
               </button>
             </div>
+
             <div className="mt-4">
               <table className="min-w-full text-sm">
                 <thead className="bg-gray-50">
@@ -340,7 +377,7 @@ export default function UnitAssessments() {
                   </tr>
                 </thead>
                 <tbody className="divide-y">
-                  {students.map((s) => (
+                  {(students || []).map((s) => (
                     <tr key={s.id} className="hover:bg-gray-50">
                       <Td className="font-medium">{s.name}</Td>
                       <Td>{s.reg_number || "—"}</Td>
@@ -359,7 +396,7 @@ export default function UnitAssessments() {
                       </Td>
                     </tr>
                   ))}
-                  {students.length === 0 && (
+                  {(students || []).length === 0 && (
                     <tr>
                       <td colSpan="3" className="px-5 py-6 text-center text-gray-500">
                         No enrolled students.
@@ -368,6 +405,7 @@ export default function UnitAssessments() {
                   )}
                 </tbody>
               </table>
+
               <div className="mt-4 flex items-center gap-2">
                 <button
                   onClick={saveGrades}
@@ -383,6 +421,7 @@ export default function UnitAssessments() {
                   Cancel
                 </button>
               </div>
+
               {err && (
                 <div className="mt-3 rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
                   {err}

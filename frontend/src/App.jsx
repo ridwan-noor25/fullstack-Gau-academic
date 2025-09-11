@@ -382,6 +382,10 @@ import HodLecturers from "./pages/hod/HodLecturers";
 import HodUnits from "./pages/hod/HodUnits";
 
 import MyGrades from "./pages/students/MyGrades";
+import Profile from "./pages/students/Profile";
+import Settings from "./pages/students/settings";
+import EnrollUnits from "./pages/students/EnrollUnits";
+import HodPrograms from "./pages/hod/Programs";
 
 // 404
 const NotFound = () => (
@@ -415,12 +419,13 @@ export default function App() {
           <Route path="overview" element={<DepartmentsOverview />} />
         </Route>
 
-        {/* ===================== HOD (sidebar layout + pages) ===================== */}
+               {/* ===================== HOD (nested under a layout) ===================== */}
         <Route path="/hod" element={<HodLayout />}>
           <Route index element={<Navigate to="dashboard" replace />} />
           <Route path="dashboard" element={<HodDashboard />} />
           <Route path="lecturers" element={<HodLecturers />} />
           <Route path="units" element={<HodUnits />} />
+          <Route path="programs" element={<HodPrograms />} />
         </Route>
 
         {/* ===================== LECTURER ===================== */}
@@ -435,12 +440,13 @@ export default function App() {
 
         {/* ===================== STUDENT ===================== */}
         <Route path="/student" element={<StudentLayout />}>
-          <Route index element={<Navigate to="dashboard" replace />} />
-          <Route path="dashboard" element={<StudentDashboard />} />
-          <Route path="grades" element={<MyGrades />} />
-          <Route path="viewgrades" element={<Navigate to="../grades" replace />} />
-          <Route path="report-missing" element={<MissingReport />} />
-          <Route path="report" element={<MissingReport />} />
+  <Route index element={<Navigate to="dashboard" replace />} />
+  <Route path="dashboard" element={<StudentDashboard />} />
+  <Route path="enroll" element={<EnrollUnits />} />
+  <Route path="grades" element={<MyGrades />} />
+  <Route path="report-missing" element={<MissingReport />} />
+  <Route path="profile" element={<Profile />} />
+  <Route path="settings" element={<Settings />} />
         </Route>
 
         {/* Fallback */}

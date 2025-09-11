@@ -3,6 +3,8 @@ import os
 from flask import Flask
 from flask_cors import CORS
 from .extensions import db, jwt
+from .student import student_bp  # NEW
+
 
 # Optional (only if you actually have a migrate object in extensions.py)
 try:
@@ -55,6 +57,8 @@ def create_app():
     # ----- Blueprints -----
     app.register_blueprint(auth_bp, url_prefix="/api/auth")
     app.register_blueprint(lecturer_bp, url_prefix="/api/lecturer")
+    app.register_blueprint(student_bp, url_prefix="/api/student")
+
     if api_bp is not None:
         app.register_blueprint(api_bp, url_prefix="/api")
     if hod_bp is not None:
