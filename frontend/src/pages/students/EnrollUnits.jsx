@@ -78,7 +78,7 @@ export default function EnrollUnits() {
               className="mt-1 rounded-lg border px-3 py-2"
             >
               <option value="">Select…</option>
-              {[1,2,3,4,5,6].map((y) => (
+              {[1,2,3,4].map((y) => (
                 <option key={y} value={y}>{y}</option>
               ))}
             </select>
@@ -91,7 +91,7 @@ export default function EnrollUnits() {
               className="mt-1 rounded-lg border px-3 py-2"
             >
               <option value="">Select…</option>
-              {[1,2,3].map((s) => (
+              {[1,2].map((s) => (
                 <option key={s} value={s}>{s}</option>
               ))}
             </select>

@@ -8,8 +8,8 @@ import {
   deleteUnit,
 } from "../../utils/hodApi";
 
-const YEARS = [1, 2, 3, 4, 5, 6];
-const SEMS = [1, 2, 3];
+const YEARS = [1, 2, 3, 4];
+const SEMS = [1, 2];
 
 export default function HodUnits() {
   const [loading, setLoading] = useState(true);
@@ -20,7 +20,6 @@ export default function HodUnits() {
   // create form
   const [code, setCode] = useState("");
   const [title, setTitle] = useState("");
-  const [credits, setCredits] = useState("");
   const [yearLevel, setYearLevel] = useState("");
   const [semester, setSemester] = useState("");
   const [lecIds, setLecIds] = useState([]);
@@ -67,7 +66,6 @@ export default function HodUnits() {
       const payload = {
         code,
         title,
-        credits: credits ? Number(credits) : undefined,
         year_level: Number(yearLevel),
         semester: Number(semester),
         lecturer_ids: lecIds,
@@ -156,17 +154,7 @@ export default function HodUnits() {
               placeholder="Physical Chemistry I"
             />
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Credits</label>
-            <input
-              type="number"
-              value={credits}
-              onChange={(e) => setCredits(e.target.value)}
-              className="mt-1 w-full rounded-lg border px-3 py-2"
-              placeholder="3"
-              min="0"
-            />
-          </div>
+        
 
           <div>
             <label className="block text-sm font-medium text-gray-700">Year Level</label>
@@ -234,7 +222,6 @@ export default function HodUnits() {
             <tr>
               <Th>Code</Th>
               <Th>Title</Th>
-              <Th>Credits</Th>
               <Th>Year</Th>
               <Th>Sem</Th>
               <Th>Lecturers</Th>
@@ -255,7 +242,6 @@ export default function HodUnits() {
                 <tr key={u.id}>
                   <Td className="font-medium">{u.code}</Td>
                   <Td>{u.title}</Td>
-                  <Td>{u.credits ?? "—"}</Td>
                   <Td>{u.year_level ?? "—"}</Td>
                   <Td>{u.semester ?? "—"}</Td>
                   <Td className="text-sm">

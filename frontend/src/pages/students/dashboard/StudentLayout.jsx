@@ -21,8 +21,8 @@ export default function StudentLayout() {
     "/student/grades": "My Grades",
     "/student/report": "Report Missing Marks",
     "/student/report-missing": "Report Missing Marks",
-    "/student/profile": "Profile",
-    "/student/settings": "Settings",
+    // "/student/profile": "Profile",
+    // "/student/settings": "Settings",
   };
   const pageTitle =
     titleMap[location.pathname] ||

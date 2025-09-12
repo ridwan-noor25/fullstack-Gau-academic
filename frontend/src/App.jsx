@@ -382,8 +382,8 @@ import HodLecturers from "./pages/hod/HodLecturers";
 import HodUnits from "./pages/hod/HodUnits";
 
 import MyGrades from "./pages/students/MyGrades";
-import Profile from "./pages/students/Profile";
-import Settings from "./pages/students/settings";
+// import Profile from "./pages/students/Profile";
+// import Settings from "./pages/students/settings";
 import EnrollUnits from "./pages/students/EnrollUnits";
 import HodPrograms from "./pages/hod/Programs";
 
@@ -444,9 +444,9 @@ export default function App() {
   <Route path="dashboard" element={<StudentDashboard />} />
   <Route path="enroll" element={<EnrollUnits />} />
   <Route path="grades" element={<MyGrades />} />
-  <Route path="report-missing" element={<MissingReport />} />
-  <Route path="profile" element={<Profile />} />
-  <Route path="settings" element={<Settings />} />
+  <Route path="reports" element={<MissingReport />} />
+  {/* <Route path="profile" element={<Profile />} />
+  <Route path="settings" element={<Settings />} /> */}
         </Route>
 
         {/* Fallback */}
