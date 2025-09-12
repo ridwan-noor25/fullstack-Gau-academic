@@ -448,7 +448,7 @@ function AdminDashboardInner() {
       {/* Top row */}
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl md:text-3xl font-extrabold text-green-900">Admin Dashboard</h1>
+          {/* <h1 className="text-2xl md:text-3xl font-extrabold text-green-900">Admin Dashboard</h1> */}
           <p className="text-sm text-gray-600">Manage departments, users, units, and system health at a glance.</p>
           {err && (
             <div className="mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
@@ -456,14 +456,14 @@ function AdminDashboardInner() {
             </div>
           )}
         </div>
-        <button
+        {/* <button
           onClick={fetchData}
           className="inline-flex items-center gap-2 rounded-lg bg-white border px-3 py-2 text-sm hover:bg-gray-50"
           title="Refresh"
         >
           <ArrowPathIcon className="h-5 w-5" />
           Refresh
-        </button>
+        </button> */}
       </div>
 
       {/* Loading */}
