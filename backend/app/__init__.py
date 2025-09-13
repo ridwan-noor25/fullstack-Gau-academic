@@ -80,12 +80,189 @@
 
 
 
+# # app/__init__.py
+# import os
+# from flask import Flask
+# from flask_cors import CORS
+# from .extensions import db, jwt
+# from .student import student_bp  # NEW
+
+# # Optional migrate
+# try:
+#     from .extensions import migrate
+# except Exception:
+#     migrate = None
+
+# # Blueprints
+# from .auth import auth_bp
+# from .lecturer import lecturer_bp
+# try:
+#     from .routes import api_bp  # <-- this is your existing routes.py module (keep if you use it)
+# except Exception:
+#     api_bp = None
+# try:
+#     from .hod import hod_bp
+# except Exception:
+#     hod_bp = None
+
+# # 👉 REPLACE the broken imports with these:
+# from .units_api import units_bp        # ✅ Student units + unit lookup
+# from .reports_api import reports_bp    # ✅ Missing mark reports
+
+# def create_app():
+#     app = Flask(__name__)
+
+#     # ----- Config -----
+#     app.config.update(
+#         SECRET_KEY=os.getenv("SECRET_KEY", "dev-secret"),
+#         JWT_SECRET_KEY=os.getenv("JWT_SECRET_KEY", "dev-jwt-secret"),
+#         SQLALCHEMY_DATABASE_URI=os.getenv("SQLALCHEMY_DATABASE_URI", "sqlite:///gau_gradeview.db"),
+#         SQLALCHEMY_TRACK_MODIFICATIONS=False,
+#         CORS_SUPPORTS_CREDENTIALS=True,
+#     )
+
+#     # ----- Extensions -----
+#     db.init_app(app)
+#     jwt.init_app(app)
+#     if migrate is not None:
+#         migrate.init_app(app, db)
+
+#     # ----- CORS -----
+#     CORS(
+#         app,
+#         resources={r"/api/*": {"origins": ["http://127.0.0.1:5173", "http://localhost:5173"]}},
+#         supports_credentials=True,
+#         allow_headers=["Content-Type", "Authorization"],
+#         expose_headers=["Authorization"],
+#         methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+#         max_age=600,
+#     )
+
+#     # ----- Blueprints -----
+#     app.register_blueprint(auth_bp, url_prefix="/api/auth")
+#     app.register_blueprint(lecturer_bp, url_prefix="/api/lecturer")
+#     app.register_blueprint(student_bp, url_prefix="/api/student")
+
+#     if api_bp is not None:
+#         app.register_blueprint(api_bp, url_prefix="/api")
+#     if hod_bp is not None:
+#         app.register_blueprint(hod_bp, url_prefix="/api/hod")
+
+#     # 👉 NEW: register our API blueprints (no url_prefix override; they define their own)
+#     app.register_blueprint(units_bp)      # /api/student/units, /api/units/lookup
+#     app.register_blueprint(reports_bp)    # /api/reports/missing
+
+#     # ----- Health -----
+#     @app.get("/api/health")
+#     def health():
+#         return {"status": "ok"}, 200
+
+#     # ----- Dev: create tables if not using migrations -----
+#     with app.app_context():
+#         from . import models  # ensure models are imported
+#         db.create_all()
+
+#     return app
+
+
+
+# # app/__init__.py
+# import os
+# from flask import Flask
+# from flask_cors import CORS
+# from .extensions import db, jwt
+# from .student import student_bp  # NEW
+
+# # Optional migrate
+# try:
+#     from .extensions import migrate
+# except Exception:
+#     migrate = None
+
+# # Blueprints
+# from .auth import auth_bp
+# from .lecturer import lecturer_bp
+# try:
+#     from .routes import api_bp
+# except Exception:
+#     api_bp = None
+# try:
+#     from .hod import hod_bp
+# except Exception:
+#     hod_bp = None
+
+# from .units_api import units_bp        # ✅ Student units + unit lookup
+# from .reports_api import reports_bp    # ✅ Missing mark reports
+
+# def create_app():
+#     app = Flask(__name__)
+
+#     # ----- Config -----
+#     app.config.update(
+#         SECRET_KEY=os.getenv("SECRET_KEY", "dev-secret"),
+#         JWT_SECRET_KEY=os.getenv("JWT_SECRET_KEY", "dev-jwt-secret"),
+#         SQLALCHEMY_DATABASE_URI=os.getenv("SQLALCHEMY_DATABASE_URI", "sqlite:///gau_gradeview.db"),
+#         SQLALCHEMY_TRACK_MODIFICATIONS=False,
+#         CORS_SUPPORTS_CREDENTIALS=True,
+#     )
+
+#     # ----- Extensions -----
+#     db.init_app(app)
+#     jwt.init_app(app)
+#     if migrate is not None:
+#         migrate.init_app(app, db)
+
+#     # ----- CORS -----
+#     CORS(
+#         app,
+#         resources={r"/api/*": {
+#             "origins": [
+#                 "http://127.0.0.1:5173",
+#                 "http://localhost:5173",
+#                 "http://127.0.0.1:5174",   # ✅ Added
+#                 "http://localhost:5174",   # ✅ Added
+#             ]
+#         }},
+#         supports_credentials=True,
+#         allow_headers=["Content-Type", "Authorization"],
+#         expose_headers=["Authorization"],
+#         methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+#         max_age=600,
+#     )
+
+#     # ----- Blueprints -----
+#     app.register_blueprint(auth_bp, url_prefix="/api/auth")
+#     app.register_blueprint(lecturer_bp, url_prefix="/api/lecturer")
+#     app.register_blueprint(student_bp, url_prefix="/api/student")
+
+#     if api_bp is not None:
+#         app.register_blueprint(api_bp, url_prefix="/api")
+#     if hod_bp is not None:
+#         app.register_blueprint(hod_bp, url_prefix="/api/hod")
+
+#     # 👉 NEW
+#     app.register_blueprint(units_bp)
+#     app.register_blueprint(reports_bp)
+
+#     # ----- Health -----
+#     @app.get("/api/health")
+#     def health():
+#         return {"status": "ok"}, 200
+
+#     # ----- Dev: create tables if not using migrations -----
+#     with app.app_context():
+#         from . import models
+#         db.create_all()
+
+#     return app
+
+
 # app/__init__.py
 import os
 from flask import Flask
 from flask_cors import CORS
 from .extensions import db, jwt
-from .student import student_bp  # NEW
+from .student import student_bp
 
 # Optional migrate
 try:
@@ -93,21 +270,32 @@ try:
 except Exception:
     migrate = None
 
-# Blueprints
+# Core blueprints
 from .auth import auth_bp
 from .lecturer import lecturer_bp
+
+# Optional/legacy routes blueprint
 try:
-    from .routes import api_bp  # <-- this is your existing routes.py module (keep if you use it)
+    from .routes import api_bp
 except Exception:
     api_bp = None
+
+# HoD blueprint (if present)
 try:
     from .hod import hod_bp
 except Exception:
     hod_bp = None
 
-# 👉 REPLACE the broken imports with these:
-from .units_api import units_bp        # ✅ Student units + unit lookup
-from .reports_api import reports_bp    # ✅ Missing mark reports
+# Units + Reports APIs
+from .units_api import units_bp
+from .reports_api import reports_bp
+
+# ✅ NEW: Admin API
+try:
+    from .routes.admin import admin_bp
+except Exception:
+    admin_bp = None
+
 
 def create_app():
     app = Flask(__name__)
@@ -130,7 +318,16 @@ def create_app():
     # ----- CORS -----
     CORS(
         app,
-        resources={r"/api/*": {"origins": ["http://127.0.0.1:5173", "http://localhost:5173"]}},
+        resources={
+            r"/api/*": {
+                "origins": [
+                    "http://127.0.0.1:5173",
+                    "http://localhost:5173",
+                    "http://127.0.0.1:5174",   # allow Vite on 5174 as well
+                    "http://localhost:5174",
+                ]
+            }
+        },
         supports_credentials=True,
         allow_headers=["Content-Type", "Authorization"],
         expose_headers=["Authorization"],
@@ -143,14 +340,21 @@ def create_app():
     app.register_blueprint(lecturer_bp, url_prefix="/api/lecturer")
     app.register_blueprint(student_bp, url_prefix="/api/student")
 
+    # Optional/legacy combined routes
     if api_bp is not None:
         app.register_blueprint(api_bp, url_prefix="/api")
+
+    # HoD
     if hod_bp is not None:
         app.register_blueprint(hod_bp, url_prefix="/api/hod")
 
-    # 👉 NEW: register our API blueprints (no url_prefix override; they define their own)
-    app.register_blueprint(units_bp)      # /api/student/units, /api/units/lookup
-    app.register_blueprint(reports_bp)    # /api/reports/missing
+    # Units + Reports
+    app.register_blueprint(units_bp)     # defines its own /api/... prefixes
+    app.register_blueprint(reports_bp)   # defines its own /api/... prefixes
+
+    # ✅ Admin
+    if admin_bp is not None:
+        app.register_blueprint(admin_bp, url_prefix="/api/admin")
 
     # ----- Health -----
     @app.get("/api/health")
