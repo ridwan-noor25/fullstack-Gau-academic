@@ -1,7 +1,6 @@
-# # app/models.py
 # from __future__ import annotations
 
-# from sqlalchemy import func, UniqueConstraint
+# from sqlalchemy import func, UniqueConstraint, Index
 # from .extensions import db
 # from werkzeug.security import generate_password_hash, check_password_hash
 
@@ -10,7 +9,10 @@
 # class TimestampMixin:
 #     created_at = db.Column(db.DateTime, nullable=False, server_default=func.now())
 #     updated_at = db.Column(
-#         db.DateTime, nullable=False, server_default=func.now(), onupdate=func.now()
+#         db.DateTime,
+#         nullable=False,
+#         server_default=func.now(),
+#         onupdate=func.now(),
 #     )
 
 
@@ -22,18 +24,17 @@
 #     name = db.Column(db.String(160), nullable=False, unique=True, index=True)
 #     code = db.Column(db.String(32), nullable=False, unique=True, index=True)
 
-#     # Head of Department (HoD) -> users.id
 #     hod_user_id = db.Column(
-#         db.Integer, db.ForeignKey("users.id", ondelete="SET NULL"), nullable=True
+#         db.Integer,
+#         db.ForeignKey("users.id", ondelete="SET NULL"),
+#         nullable=True,
 #     )
 
-#     # Relationships
 #     users = db.relationship(
 #         "User",
 #         back_populates="department",
 #         foreign_keys="User.department_id",
 #         lazy="selectin",
-#         cascade="all, delete-orphan",
 #         passive_deletes=True,
 #     )
 
@@ -62,9 +63,6 @@
 #             "hod_user_id": self.hod_user_id,
 #         }
 
-#     def __repr__(self) -> str:
-#         return f"<Department id={self.id} code={self.code!r} name={self.name!r}>"
-
 
 # class User(TimestampMixin, db.Model):
 #     __tablename__ = "users"
@@ -74,16 +72,16 @@
 #     email = db.Column(db.String(120), unique=True, nullable=False, index=True)
 #     _password_hash = db.Column("password_hash", db.String(256), nullable=False)
 
-#     # Optional student details
 #     reg_number = db.Column(db.String(64), unique=True, nullable=True, index=True)
-#     program = db.Column(db.String(160), nullable=True)  # course/degree name
+#     program = db.Column(db.String(160), nullable=True)
 
-#     # Roles: admin | hod | lecturer | student
 #     role = db.Column(db.String(32), nullable=False, default="student", index=True)
 
-#     # Home department
 #     department_id = db.Column(
-#         db.Integer, db.ForeignKey("departments.id", ondelete="SET NULL"), nullable=True
+#         db.Integer,
+#         db.ForeignKey("departments.id", ondelete="SET NULL"),
+#         nullable=True,
+#         index=True,
 #     )
 
 #     department = db.relationship(
@@ -93,7 +91,6 @@
 #         lazy="selectin",
 #     )
 
-#     # HoD link (single department)
 #     hod_of_department = db.relationship(
 #         "Department",
 #         back_populates="hod",
@@ -102,7 +99,6 @@
 #         lazy="selectin",
 #     )
 
-#     # Teaching assignments (if lecturer)
 #     teaching_assignments = db.relationship(
 #         "TeachingAssignment",
 #         back_populates="lecturer",
@@ -112,7 +108,6 @@
 #         passive_deletes=True,
 #     )
 
-#     # Enrollments (if student)
 #     enrollments = db.relationship(
 #         "Enrollment",
 #         back_populates="student",
@@ -122,13 +117,13 @@
 #         passive_deletes=True,
 #     )
 
-#     # Grades entered/approved by this user
 #     grades_entered = db.relationship(
 #         "Grade",
 #         back_populates="entered_by_user",
 #         foreign_keys="Grade.entered_by",
 #         lazy="selectin",
 #     )
+
 #     grades_approved = db.relationship(
 #         "Grade",
 #         back_populates="approved_by_user",
@@ -136,7 +131,6 @@
 #         lazy="selectin",
 #     )
 
-#     # Auth helpers
 #     @property
 #     def password(self):
 #         raise AttributeError("Password is write-only")
@@ -158,12 +152,10 @@
 #             "email": self.email,
 #             "role": self.role,
 #             "department_id": self.department_id,
+#             "department": self.department.to_dict() if self.department else None,
 #             "reg_number": self.reg_number,
 #             "program": self.program,
 #         }
-
-#     def __repr__(self) -> str:
-#         return f"<User id={self.id} email={self.email} role={self.role}>"
 
 
 # class Unit(TimestampMixin, db.Model):
@@ -171,15 +163,17 @@
 
 #     id = db.Column(db.Integer, primary_key=True)
 #     code = db.Column(db.String(32), unique=True, nullable=False, index=True)
-#     title = db.Column(db.String(200), nullable=False)
+#     title = db.Column(db.String(200), nullable=False, index=True)
 #     credits = db.Column(db.Integer, nullable=True)
 
-#     # NEW: term awareness
-#     year_level = db.Column(db.Integer, nullable=True)  # e.g., 1..6
-#     semester = db.Column(db.Integer, nullable=True)    # e.g., 1..3
+#     year_level = db.Column(db.Integer, nullable=True, index=True)
+#     semester = db.Column(db.Integer, nullable=True, index=True)
 
 #     department_id = db.Column(
-#         db.Integer, db.ForeignKey("departments.id", ondelete="SET NULL"), nullable=True
+#         db.Integer,
+#         db.ForeignKey("departments.id", ondelete="SET NULL"),
+#         nullable=True,
+#         index=True,
 #     )
 
 #     department = db.relationship(
@@ -216,9 +210,6 @@
 #         passive_deletes=True,
 #     )
 
-#     def __repr__(self) -> str:
-#         return f"<Unit id={self.id} code={self.code!r} title={self.title!r}>"
-
 #     def to_dict(self) -> dict:
 #         return {
 #             "id": self.id,
@@ -236,14 +227,21 @@
 #     __tablename__ = "teaching_assignments"
 #     __table_args__ = (
 #         UniqueConstraint("unit_id", "lecturer_id", name="uq_teach_unit_lecturer"),
+#         Index("ix_teach_unit_lecturer", "unit_id", "lecturer_id"),
 #     )
 
 #     id = db.Column(db.Integer, primary_key=True)
 #     unit_id = db.Column(
-#         db.Integer, db.ForeignKey("units.id", ondelete="CASCADE"), nullable=False
+#         db.Integer,
+#         db.ForeignKey("units.id", ondelete="CASCADE"),
+#         nullable=False,
+#         index=True,
 #     )
 #     lecturer_id = db.Column(
-#         db.Integer, db.ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+#         db.Integer,
+#         db.ForeignKey("users.id", ondelete="CASCADE"),
+#         nullable=False,
+#         index=True,
 #     )
 
 #     unit = db.relationship(
@@ -259,22 +257,26 @@
 #         lazy="selectin",
 #     )
 
-#     def to_dict(self) -> dict:
-#         return {"id": self.id, "unit_id": self.unit_id, "lecturer_id": self.lecturer_id}
-
 
 # class Enrollment(TimestampMixin, db.Model):
 #     __tablename__ = "enrollments"
 #     __table_args__ = (
 #         UniqueConstraint("student_id", "unit_id", name="uq_enroll_student_unit"),
+#         Index("ix_enroll_student_unit", "student_id", "unit_id"),
 #     )
 
 #     id = db.Column(db.Integer, primary_key=True)
 #     student_id = db.Column(
-#         db.Integer, db.ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+#         db.Integer,
+#         db.ForeignKey("users.id", ondelete="CASCADE"),
+#         nullable=False,
+#         index=True,
 #     )
 #     unit_id = db.Column(
-#         db.Integer, db.ForeignKey("units.id", ondelete="CASCADE"), nullable=False
+#         db.Integer,
+#         db.ForeignKey("units.id", ondelete="CASCADE"),
+#         nullable=False,
+#         index=True,
 #     )
 
 #     student = db.relationship(
@@ -290,11 +292,13 @@
 #         lazy="selectin",
 #     )
 
-#     def to_dict(self) -> dict:
+#     def to_dict(self):
 #         return {
 #             "id": self.id,
 #             "student_id": self.student_id,
 #             "unit_id": self.unit_id,
+#             "student": self.student.to_dict() if self.student else None,
+#             "unit": self.unit.to_dict() if self.unit else None,
 #         }
 
 
@@ -303,25 +307,31 @@
 
 #     id = db.Column(db.Integer, primary_key=True)
 #     unit_id = db.Column(
-#         db.Integer, db.ForeignKey("units.id", ondelete="CASCADE"), nullable=False
+#         db.Integer,
+#         db.ForeignKey("units.id", ondelete="CASCADE"),
+#         nullable=False,
+#         index=True,
 #     )
 #     title = db.Column(db.String(200), nullable=False)
 #     max_score = db.Column(db.Float, nullable=False, default=100.0)
-#     weight = db.Column(db.Float, nullable=False, default=1.0)  # 0..1
+#     weight = db.Column(db.Float, nullable=False, default=1.0)
 #     created_by = db.Column(
-#         db.Integer, db.ForeignKey("users.id", ondelete="SET NULL"), nullable=True
+#         db.Integer,
+#         db.ForeignKey("users.id", ondelete="SET NULL"),
+#         nullable=True,
+#         index=True,
 #     )
 
-#     # Optional fields
 #     due_at = db.Column(db.DateTime, nullable=True)
-#     is_published = db.Column(db.Boolean, nullable=False, default=False)
+#     is_published = db.Column(db.Boolean, nullable=False, default=False, index=True)
 
 #     unit = db.relationship(
-#         "Unit", back_populates="assessments", foreign_keys=[unit_id], lazy="selectin"
+#         "Unit",
+#         back_populates="assessments",
+#         foreign_keys=[unit_id],
+#         lazy="selectin",
 #     )
-#     creator = db.relationship(
-#         "User", foreign_keys=[created_by], lazy="selectin"
-#     )
+#     creator = db.relationship("User", foreign_keys=[created_by], lazy="selectin")
 
 #     grades = db.relationship(
 #         "Grade",
@@ -332,64 +342,52 @@
 #         passive_deletes=True,
 #     )
 
-#     def to_dict(self) -> dict:
-#         return {
-#             "id": self.id,
-#             "unit_id": self.unit_id,
-#             "title": self.title,
-#             "max_score": self.max_score,
-#             "weight": self.weight,
-#             "created_by": self.created_by,
-#             "due_at": self.due_at.isoformat() if self.due_at else None,
-#             "is_published": self.is_published,
-#         }
-
 
 # class Grade(TimestampMixin, db.Model):
 #     __tablename__ = "grades"
 #     __table_args__ = (
 #         UniqueConstraint("assessment_id", "student_id", name="uq_grade_assessment_student"),
+#         Index("ix_grade_status", "status"),
 #     )
 
 #     id = db.Column(db.Integer, primary_key=True)
 #     assessment_id = db.Column(
-#         db.Integer, db.ForeignKey("assessments.id", ondelete="CASCADE"), nullable=False
+#         db.Integer,
+#         db.ForeignKey("assessments.id", ondelete="CASCADE"),
+#         nullable=False,
+#         index=True,
 #     )
 #     student_id = db.Column(
-#         db.Integer, db.ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+#         db.Integer,
+#         db.ForeignKey("users.id", ondelete="CASCADE"),
+#         nullable=False,
+#         index=True,
 #     )
 #     score = db.Column(db.Float, nullable=False)
-#     status = db.Column(db.String(20), nullable=False, default="draft")  # draft/submitted/approved/published
+#     status = db.Column(db.String(20), nullable=False, default="draft", index=True)
+
 #     entered_by = db.Column(
-#         db.Integer, db.ForeignKey("users.id", ondelete="SET NULL"), nullable=True
+#         db.Integer,
+#         db.ForeignKey("users.id", ondelete="SET NULL"),
+#         nullable=True,
+#         index=True,
 #     )
 #     approved_by = db.Column(
-#         db.Integer, db.ForeignKey("users.id", ondelete="SET NULL"), nullable=True
+#         db.Integer,
+#         db.ForeignKey("users.id", ondelete="SET NULL"),
+#         nullable=True,
+#         index=True,
 #     )
 
 #     assessment = db.relationship(
-#         "Assessment", back_populates="grades", foreign_keys=[assessment_id], lazy="selectin"
+#         "Assessment",
+#         back_populates="grades",
+#         foreign_keys=[assessment_id],
+#         lazy="selectin",
 #     )
-#     student = db.relationship(
-#         "User", foreign_keys=[student_id], lazy="selectin"
-#     )
-#     entered_by_user = db.relationship(
-#         "User", foreign_keys=[entered_by], lazy="selectin"
-#     )
-#     approved_by_user = db.relationship(
-#         "User", foreign_keys=[approved_by], lazy="selectin"
-#     )
-
-#     def to_dict(self) -> dict:
-#         return {
-#             "id": self.id,
-#             "assessment_id": self.assessment_id,
-#             "student_id": self.student_id,
-#             "score": self.score,
-#             "status": self.status,
-#             "entered_by": self.entered_by,
-#             "approved_by": self.approved_by,
-#         }
+#     student = db.relationship("User", foreign_keys=[student_id], lazy="selectin")
+#     entered_by_user = db.relationship("User", foreign_keys=[entered_by], lazy="selectin")
+#     approved_by_user = db.relationship("User", foreign_keys=[approved_by], lazy="selectin")
 
 
 # class MissingMarkReport(TimestampMixin, db.Model):
@@ -397,41 +395,79 @@
 
 #     id = db.Column(db.Integer, primary_key=True)
 #     student_id = db.Column(
-#         db.Integer, db.ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+#         db.Integer,
+#         db.ForeignKey("users.id", ondelete="CASCADE"),
+#         nullable=False,
+#         index=True,
 #     )
 #     unit_id = db.Column(
-#         db.Integer, db.ForeignKey("units.id", ondelete="CASCADE"), nullable=False
+#         db.Integer,
+#         db.ForeignKey("units.id", ondelete="CASCADE"),
+#         nullable=False,
+#         index=True,
 #     )
 
-#     # Legacy
 #     description = db.Column(db.Text, nullable=True)
-
-#     # Richer fields
 #     assessment_id = db.Column(
-#         db.Integer, db.ForeignKey("assessments.id", ondelete="SET NULL"), nullable=True
+#         db.Integer,
+#         db.ForeignKey("assessments.id", ondelete="SET NULL"),
+#         nullable=True,
+#         index=True,
 #     )
 #     message = db.Column(db.Text, nullable=True)
 #     proof_url = db.Column(db.String(500), nullable=True)
-#     status = db.Column(db.String(32), nullable=False, default="Pending")  # Pending/Seen/Resolved
+#     status = db.Column(db.String(32), nullable=False, default="Pending", index=True)
 #     lecturer_note = db.Column(db.Text, nullable=True)
 
 #     student = db.relationship("User", foreign_keys=[student_id], lazy="selectin")
 #     unit = db.relationship("Unit", foreign_keys=[unit_id], lazy="selectin")
 #     assessment = db.relationship("Assessment", foreign_keys=[assessment_id], lazy="selectin")
 
-#     def to_dict(self) -> dict:
-#         return {
-#             "id": self.id,
-#             "student_id": self.student_id,
-#             "unit_id": self.unit_id,
-#             "description": self.description,
-#             "assessment_id": self.assessment_id,
-#             "message": self.message,
-#             "proof_url": self.proof_url,
-#             "status": self.status,
-#             "lecturer_note": self.lecturer_note,
-#             "created_at": self.created_at.isoformat() if self.created_at else None,
-#         }
+
+# # ---------- Admin Dashboard Helper ----------
+# class Activity(TimestampMixin, db.Model):
+#     __tablename__ = "activities"
+
+#     id = db.Column(db.Integer, primary_key=True)
+#     kind = db.Column(db.String(20), nullable=False, default="activity", index=True)
+#     title = db.Column(db.String(255), nullable=True)
+#     action = db.Column(db.String(255), nullable=True)
+#     actor = db.Column(db.String(120), nullable=True)
+#     meta_json = db.Column(db.JSON, default=dict)
+
+
+# class AdminMetrics:
+#     @staticmethod
+#     def total_users() -> int:
+#         return db.session.scalar(db.select(func.count(User.id))) or 0
+
+#     @staticmethod
+#     def count_by_role(role: str) -> int:
+#         return db.session.scalar(
+#             db.select(func.count(User.id)).where(User.role == role)
+#         ) or 0
+
+#     @staticmethod
+#     def department_count() -> int:
+#         return db.session.scalar(db.select(func.count(Department.id))) or 0
+
+#     @staticmethod
+#     def unit_count() -> int:
+#         return db.session.scalar(db.select(func.count(Unit.id))) or 0
+
+#     @staticmethod
+#     def pending_approvals() -> int:
+#         return db.session.scalar(
+#             db.select(func.count(Grade.id)).where(Grade.status.in_(["submitted"]))
+#         ) or 0
+
+#     @staticmethod
+#     def open_reports() -> int:
+#         return db.session.scalar(
+#             db.select(func.count(MissingMarkReport.id)).where(
+#                 MissingMarkReport.status != "Resolved"
+#             )
+#         ) or 0
 
 
 # __all__ = [
@@ -444,17 +480,15 @@
 #     "Assessment",
 #     "Grade",
 #     "MissingMarkReport",
+#     "Activity",
+#     "AdminMetrics",
 # ]
 
 
 
 
-
-
-# app/models.py
 from __future__ import annotations
 
-from datetime import datetime
 from sqlalchemy import func, UniqueConstraint, Index
 from .extensions import db
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -464,7 +498,10 @@ from werkzeug.security import generate_password_hash, check_password_hash
 class TimestampMixin:
     created_at = db.Column(db.DateTime, nullable=False, server_default=func.now())
     updated_at = db.Column(
-        db.DateTime, nullable=False, server_default=func.now(), onupdate=func.now()
+        db.DateTime,
+        nullable=False,
+        server_default=func.now(),
+        onupdate=func.now(),
     )
 
 
@@ -476,13 +513,12 @@ class Department(TimestampMixin, db.Model):
     name = db.Column(db.String(160), nullable=False, unique=True, index=True)
     code = db.Column(db.String(32), nullable=False, unique=True, index=True)
 
-    # Head of Department (HoD) -> users.id
     hod_user_id = db.Column(
-        db.Integer, db.ForeignKey("users.id", ondelete="SET NULL"), nullable=True
+        db.Integer,
+        db.ForeignKey("users.id", ondelete="SET NULL"),
+        nullable=True,
     )
 
-    # Relationships
-    # NOTE: removed delete-orphan to avoid accidental user deletions when department_id is nulled.
     users = db.relationship(
         "User",
         back_populates="department",
@@ -516,9 +552,6 @@ class Department(TimestampMixin, db.Model):
             "hod_user_id": self.hod_user_id,
         }
 
-    def __repr__(self) -> str:
-        return f"<Department id={self.id} code={self.code!r} name={self.name!r}>"
-
 
 class User(TimestampMixin, db.Model):
     __tablename__ = "users"
@@ -528,16 +561,16 @@ class User(TimestampMixin, db.Model):
     email = db.Column(db.String(120), unique=True, nullable=False, index=True)
     _password_hash = db.Column("password_hash", db.String(256), nullable=False)
 
-    # Optional student details
     reg_number = db.Column(db.String(64), unique=True, nullable=True, index=True)
-    program = db.Column(db.String(160), nullable=True)  # course/degree name
+    program = db.Column(db.String(160), nullable=True)
 
-    # Roles: admin | hod | lecturer | student
     role = db.Column(db.String(32), nullable=False, default="student", index=True)
 
-    # Home department
     department_id = db.Column(
-        db.Integer, db.ForeignKey("departments.id", ondelete="SET NULL"), nullable=True, index=True
+        db.Integer,
+        db.ForeignKey("departments.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
     )
 
     department = db.relationship(
@@ -547,7 +580,6 @@ class User(TimestampMixin, db.Model):
         lazy="selectin",
     )
 
-    # HoD link (single department)
     hod_of_department = db.relationship(
         "Department",
         back_populates="hod",
@@ -556,7 +588,6 @@ class User(TimestampMixin, db.Model):
         lazy="selectin",
     )
 
-    # Teaching assignments (if lecturer)
     teaching_assignments = db.relationship(
         "TeachingAssignment",
         back_populates="lecturer",
@@ -566,7 +597,6 @@ class User(TimestampMixin, db.Model):
         passive_deletes=True,
     )
 
-    # Enrollments (if student)
     enrollments = db.relationship(
         "Enrollment",
         back_populates="student",
@@ -576,13 +606,13 @@ class User(TimestampMixin, db.Model):
         passive_deletes=True,
     )
 
-    # Grades entered/approved by this user
     grades_entered = db.relationship(
         "Grade",
         back_populates="entered_by_user",
         foreign_keys="Grade.entered_by",
         lazy="selectin",
     )
+
     grades_approved = db.relationship(
         "Grade",
         back_populates="approved_by_user",
@@ -590,7 +620,6 @@ class User(TimestampMixin, db.Model):
         lazy="selectin",
     )
 
-    # Auth helpers
     @property
     def password(self):
         raise AttributeError("Password is write-only")
@@ -612,12 +641,10 @@ class User(TimestampMixin, db.Model):
             "email": self.email,
             "role": self.role,
             "department_id": self.department_id,
+            "department": self.department.to_dict() if self.department else None,
             "reg_number": self.reg_number,
             "program": self.program,
         }
-
-    def __repr__(self) -> str:
-        return f"<User id={self.id} email={self.email} role={self.role}>"
 
 
 class Unit(TimestampMixin, db.Model):
@@ -628,12 +655,14 @@ class Unit(TimestampMixin, db.Model):
     title = db.Column(db.String(200), nullable=False, index=True)
     credits = db.Column(db.Integer, nullable=True)
 
-    # Term awareness
-    year_level = db.Column(db.Integer, nullable=True, index=True)  # e.g., 1..6
-    semester = db.Column(db.Integer, nullable=True, index=True)    # e.g., 1..3
+    year_level = db.Column(db.Integer, nullable=True, index=True)
+    semester = db.Column(db.Integer, nullable=True, index=True)
 
     department_id = db.Column(
-        db.Integer, db.ForeignKey("departments.id", ondelete="SET NULL"), nullable=True, index=True
+        db.Integer,
+        db.ForeignKey("departments.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
     )
 
     department = db.relationship(
@@ -670,9 +699,6 @@ class Unit(TimestampMixin, db.Model):
         passive_deletes=True,
     )
 
-    def __repr__(self) -> str:
-        return f"<Unit id={self.id} code={self.code!r} title={self.title!r}>"
-
     def to_dict(self) -> dict:
         return {
             "id": self.id,
@@ -695,10 +721,16 @@ class TeachingAssignment(TimestampMixin, db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     unit_id = db.Column(
-        db.Integer, db.ForeignKey("units.id", ondelete="CASCADE"), nullable=False, index=True
+        db.Integer,
+        db.ForeignKey("units.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
     )
     lecturer_id = db.Column(
-        db.Integer, db.ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+        db.Integer,
+        db.ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
     )
 
     unit = db.relationship(
@@ -714,9 +746,6 @@ class TeachingAssignment(TimestampMixin, db.Model):
         lazy="selectin",
     )
 
-    def to_dict(self) -> dict:
-        return {"id": self.id, "unit_id": self.unit_id, "lecturer_id": self.lecturer_id}
-
 
 class Enrollment(TimestampMixin, db.Model):
     __tablename__ = "enrollments"
@@ -727,10 +756,16 @@ class Enrollment(TimestampMixin, db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     student_id = db.Column(
-        db.Integer, db.ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+        db.Integer,
+        db.ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
     )
     unit_id = db.Column(
-        db.Integer, db.ForeignKey("units.id", ondelete="CASCADE"), nullable=False, index=True
+        db.Integer,
+        db.ForeignKey("units.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
     )
 
     student = db.relationship(
@@ -746,11 +781,13 @@ class Enrollment(TimestampMixin, db.Model):
         lazy="selectin",
     )
 
-    def to_dict(self) -> dict:
+    def to_dict(self):
         return {
             "id": self.id,
             "student_id": self.student_id,
             "unit_id": self.unit_id,
+            "student": self.student.to_dict() if self.student else None,
+            "unit": self.unit.to_dict() if self.unit else None,
         }
 
 
@@ -759,25 +796,31 @@ class Assessment(TimestampMixin, db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     unit_id = db.Column(
-        db.Integer, db.ForeignKey("units.id", ondelete="CASCADE"), nullable=False, index=True
+        db.Integer,
+        db.ForeignKey("units.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
     )
     title = db.Column(db.String(200), nullable=False)
     max_score = db.Column(db.Float, nullable=False, default=100.0)
-    weight = db.Column(db.Float, nullable=False, default=1.0)  # 0..1
+    weight = db.Column(db.Float, nullable=False, default=1.0)
     created_by = db.Column(
-        db.Integer, db.ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True
+        db.Integer,
+        db.ForeignKey("users.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
     )
 
-    # Optional fields
     due_at = db.Column(db.DateTime, nullable=True)
     is_published = db.Column(db.Boolean, nullable=False, default=False, index=True)
 
     unit = db.relationship(
-        "Unit", back_populates="assessments", foreign_keys=[unit_id], lazy="selectin"
+        "Unit",
+        back_populates="assessments",
+        foreign_keys=[unit_id],
+        lazy="selectin",
     )
-    creator = db.relationship(
-        "User", foreign_keys=[created_by], lazy="selectin"
-    )
+    creator = db.relationship("User", foreign_keys=[created_by], lazy="selectin")
 
     grades = db.relationship(
         "Grade",
@@ -788,16 +831,16 @@ class Assessment(TimestampMixin, db.Model):
         passive_deletes=True,
     )
 
-    def to_dict(self) -> dict:
+    def to_dict(self):
         return {
             "id": self.id,
             "unit_id": self.unit_id,
             "title": self.title,
             "max_score": self.max_score,
             "weight": self.weight,
-            "created_by": self.created_by,
             "due_at": self.due_at.isoformat() if self.due_at else None,
             "is_published": self.is_published,
+            "created_by": self.created_by,
         }
 
 
@@ -810,35 +853,44 @@ class Grade(TimestampMixin, db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     assessment_id = db.Column(
-        db.Integer, db.ForeignKey("assessments.id", ondelete="CASCADE"), nullable=False, index=True
+        db.Integer,
+        db.ForeignKey("assessments.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
     )
     student_id = db.Column(
-        db.Integer, db.ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+        db.Integer,
+        db.ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
     )
     score = db.Column(db.Float, nullable=False)
-    # draft | submitted | approved | published
     status = db.Column(db.String(20), nullable=False, default="draft", index=True)
+
     entered_by = db.Column(
-        db.Integer, db.ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True
+        db.Integer,
+        db.ForeignKey("users.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
     )
     approved_by = db.Column(
-        db.Integer, db.ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True
+        db.Integer,
+        db.ForeignKey("users.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
     )
 
     assessment = db.relationship(
-        "Assessment", back_populates="grades", foreign_keys=[assessment_id], lazy="selectin"
+        "Assessment",
+        back_populates="grades",
+        foreign_keys=[assessment_id],
+        lazy="selectin",
     )
-    student = db.relationship(
-        "User", foreign_keys=[student_id], lazy="selectin"
-    )
-    entered_by_user = db.relationship(
-        "User", foreign_keys=[entered_by], lazy="selectin"
-    )
-    approved_by_user = db.relationship(
-        "User", foreign_keys=[approved_by], lazy="selectin"
-    )
+    student = db.relationship("User", foreign_keys=[student_id], lazy="selectin")
+    entered_by_user = db.relationship("User", foreign_keys=[entered_by], lazy="selectin")
+    approved_by_user = db.relationship("User", foreign_keys=[approved_by], lazy="selectin")
 
-    def to_dict(self) -> dict:
+    def to_dict(self):
         return {
             "id": self.id,
             "assessment_id": self.assessment_id,
@@ -855,22 +907,27 @@ class MissingMarkReport(TimestampMixin, db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     student_id = db.Column(
-        db.Integer, db.ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+        db.Integer,
+        db.ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
     )
     unit_id = db.Column(
-        db.Integer, db.ForeignKey("units.id", ondelete="CASCADE"), nullable=False, index=True
+        db.Integer,
+        db.ForeignKey("units.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
     )
 
-    # Legacy
     description = db.Column(db.Text, nullable=True)
-
-    # Richer fields
     assessment_id = db.Column(
-        db.Integer, db.ForeignKey("assessments.id", ondelete="SET NULL"), nullable=True, index=True
+        db.Integer,
+        db.ForeignKey("assessments.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
     )
     message = db.Column(db.Text, nullable=True)
     proof_url = db.Column(db.String(500), nullable=True)
-    # Pending | Seen | Resolved
     status = db.Column(db.String(32), nullable=False, default="Pending", index=True)
     lecturer_note = db.Column(db.Text, nullable=True)
 
@@ -878,86 +935,42 @@ class MissingMarkReport(TimestampMixin, db.Model):
     unit = db.relationship("Unit", foreign_keys=[unit_id], lazy="selectin")
     assessment = db.relationship("Assessment", foreign_keys=[assessment_id], lazy="selectin")
 
-    def to_dict(self) -> dict:
+    def to_dict(self):
         return {
             "id": self.id,
             "student_id": self.student_id,
             "unit_id": self.unit_id,
-            "description": self.description,
             "assessment_id": self.assessment_id,
             "message": self.message,
+            "description": self.description,
             "proof_url": self.proof_url,
             "status": self.status,
             "lecturer_note": self.lecturer_note,
-            "created_at": self.created_at.isoformat() if self.created_at else None,
         }
 
 
-# ---------- Lightweight Activity for Admin "Recent Activity" ----------
+# ---------- Admin Dashboard Helper ----------
 class Activity(TimestampMixin, db.Model):
-    """
-    A simple audit/activity row used by the Admin Dashboard "Recent Activity".
-    Populate it wherever meaningful actions happen (created unit, approved grade, etc.)
-    """
     __tablename__ = "activities"
 
     id = db.Column(db.Integer, primary_key=True)
-    kind = db.Column(db.String(20), nullable=False, default="activity", index=True)  # success | warn | error | activity
+    kind = db.Column(db.String(20), nullable=False, default="activity", index=True)
     title = db.Column(db.String(255), nullable=True)
     action = db.Column(db.String(255), nullable=True)
     actor = db.Column(db.String(120), nullable=True)
-    # db.JSON works on SQLite/Postgres; if you use Postgres, you can switch to JSONB as needed
     meta_json = db.Column(db.JSON, default=dict)
 
-    def to_dict(self) -> dict:
+    def to_dict(self):
         return {
             "id": self.id,
             "kind": self.kind,
-            "title": self.title or self.action,
-            "actor": self.actor or "System",
+            "title": self.title,
+            "action": self.action,
+            "actor": self.actor,
+            "meta_json": self.meta_json,
             "created_at": self.created_at.isoformat() if self.created_at else None,
-            "meta": self.meta_json or {},
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
         }
-
-    def __repr__(self) -> str:
-        return f"<Activity id={self.id} kind={self.kind} title={self.title!r}>"
-
-
-# ---------- Admin Dashboard Helper Queries (optional) ----------
-class AdminMetrics:
-    """
-    Static helpers for summary counts (so your route code stays tiny).
-    """
-
-    @staticmethod
-    def total_users() -> int:
-        return db.session.scalar(db.select(func.count(User.id))) or 0
-
-    @staticmethod
-    def count_by_role(role: str) -> int:
-        return db.session.scalar(db.select(func.count(User.id)).where(User.role == role)) or 0
-
-    @staticmethod
-    def department_count() -> int:
-        return db.session.scalar(db.select(func.count(Department.id))) or 0
-
-    @staticmethod
-    def unit_count() -> int:
-        return db.session.scalar(db.select(func.count(Unit.id))) or 0
-
-    @staticmethod
-    def pending_approvals() -> int:
-        # Map "pending approvals" to grades awaiting approval (submitted)
-        return db.session.scalar(
-            db.select(func.count(Grade.id)).where(Grade.status.in_(["submitted"]))
-        ) or 0
-
-    @staticmethod
-    def open_reports() -> int:
-        # Anything not Resolved is considered open
-        return db.session.scalar(
-            db.select(func.count(MissingMarkReport.id)).where(MissingMarkReport.status != "Resolved")
-        ) or 0
 
 
 __all__ = [
@@ -970,6 +983,5 @@ __all__ = [
     "Assessment",
     "Grade",
     "MissingMarkReport",
-    "Activity",
-    "AdminMetrics",
+    "Activity",   # ✅ ensure export
 ]

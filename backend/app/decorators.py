@@ -1,9 +1,14 @@
-# app/decorators.py
 from __future__ import annotations
 from functools import wraps
 from typing import Callable
 from flask import jsonify
-from flask_jwt_extended import verify_jwt_in_request, get_jwt, get_jwt_identity
+from flask_jwt_extended import (
+    verify_jwt_in_request,
+    get_jwt,
+    get_jwt_identity,
+)
+from app.models import User
+from app.extensions import db
 
 
 def role_required(*allowed_roles: str, allow_admin: bool = True) -> Callable:
@@ -83,3 +88,24 @@ def self_or_roles(
             }), 403
         return wrapper
     return decorator
+
+
+def hod_required(fn: Callable):
+    """
+    Restrict access to users with role='hod'.
+    Injects the current User object as the first argument (`me`) to the route.
+    """
+    @wraps(fn)
+    def wrapper(*args, **kwargs):
+        verify_jwt_in_request()
+        identity = get_jwt_identity()
+
+        # Fetch the current user from DB
+        me: User = db.session.get(User, identity)
+        if not me or me.role.lower() != "hod":
+            return jsonify({"error": "forbidden: hod role required"}), 403
+
+        # Inject `me` into the route function
+        return fn(me, *args, **kwargs)
+
+    return wrapper
