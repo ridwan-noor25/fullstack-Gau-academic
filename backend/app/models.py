@@ -1,3 +1,5 @@
+
+
 # from __future__ import annotations
 
 # from sqlalchemy import func, UniqueConstraint, Index
@@ -342,6 +344,18 @@
 #         passive_deletes=True,
 #     )
 
+#     def to_dict(self):
+#         return {
+#             "id": self.id,
+#             "unit_id": self.unit_id,
+#             "title": self.title,
+#             "max_score": self.max_score,
+#             "weight": self.weight,
+#             "due_at": self.due_at.isoformat() if self.due_at else None,
+#             "is_published": self.is_published,
+#             "created_by": self.created_by,
+#         }
+
 
 # class Grade(TimestampMixin, db.Model):
 #     __tablename__ = "grades"
@@ -389,6 +403,17 @@
 #     entered_by_user = db.relationship("User", foreign_keys=[entered_by], lazy="selectin")
 #     approved_by_user = db.relationship("User", foreign_keys=[approved_by], lazy="selectin")
 
+#     def to_dict(self):
+#         return {
+#             "id": self.id,
+#             "assessment_id": self.assessment_id,
+#             "student_id": self.student_id,
+#             "score": self.score,
+#             "status": self.status,
+#             "entered_by": self.entered_by,
+#             "approved_by": self.approved_by,
+#         }
+
 
 # class MissingMarkReport(TimestampMixin, db.Model):
 #     __tablename__ = "missing_mark_reports"
@@ -423,6 +448,19 @@
 #     unit = db.relationship("Unit", foreign_keys=[unit_id], lazy="selectin")
 #     assessment = db.relationship("Assessment", foreign_keys=[assessment_id], lazy="selectin")
 
+#     def to_dict(self):
+#         return {
+#             "id": self.id,
+#             "student_id": self.student_id,
+#             "unit_id": self.unit_id,
+#             "assessment_id": self.assessment_id,
+#             "message": self.message,
+#             "description": self.description,
+#             "proof_url": self.proof_url,
+#             "status": self.status,
+#             "lecturer_note": self.lecturer_note,
+#         }
+
 
 # # ---------- Admin Dashboard Helper ----------
 # class Activity(TimestampMixin, db.Model):
@@ -435,39 +473,17 @@
 #     actor = db.Column(db.String(120), nullable=True)
 #     meta_json = db.Column(db.JSON, default=dict)
 
-
-# class AdminMetrics:
-#     @staticmethod
-#     def total_users() -> int:
-#         return db.session.scalar(db.select(func.count(User.id))) or 0
-
-#     @staticmethod
-#     def count_by_role(role: str) -> int:
-#         return db.session.scalar(
-#             db.select(func.count(User.id)).where(User.role == role)
-#         ) or 0
-
-#     @staticmethod
-#     def department_count() -> int:
-#         return db.session.scalar(db.select(func.count(Department.id))) or 0
-
-#     @staticmethod
-#     def unit_count() -> int:
-#         return db.session.scalar(db.select(func.count(Unit.id))) or 0
-
-#     @staticmethod
-#     def pending_approvals() -> int:
-#         return db.session.scalar(
-#             db.select(func.count(Grade.id)).where(Grade.status.in_(["submitted"]))
-#         ) or 0
-
-#     @staticmethod
-#     def open_reports() -> int:
-#         return db.session.scalar(
-#             db.select(func.count(MissingMarkReport.id)).where(
-#                 MissingMarkReport.status != "Resolved"
-#             )
-#         ) or 0
+#     def to_dict(self):
+#         return {
+#             "id": self.id,
+#             "kind": self.kind,
+#             "title": self.title,
+#             "action": self.action,
+#             "actor": self.actor,
+#             "meta_json": self.meta_json,
+#             "created_at": self.created_at.isoformat() if self.created_at else None,
+#             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+#         }
 
 
 # __all__ = [
@@ -480,13 +496,12 @@
 #     "Assessment",
 #     "Grade",
 #     "MissingMarkReport",
-#     "Activity",
-#     "AdminMetrics",
+#     "Activity",   # ✅ ensure export
 # ]
 
 
 
-
+# app/models.py
 from __future__ import annotations
 
 from sqlalchemy import func, UniqueConstraint, Index
@@ -639,7 +654,7 @@ class User(TimestampMixin, db.Model):
             "id": self.id,
             "name": self.name,
             "email": self.email,
-            "role": self.role,
+            "role": (self.role or "").lower(),  # ✅ ensure lowercase always
             "department_id": self.department_id,
             "department": self.department.to_dict() if self.department else None,
             "reg_number": self.reg_number,
@@ -983,5 +998,5 @@ __all__ = [
     "Assessment",
     "Grade",
     "MissingMarkReport",
-    "Activity",   # ✅ ensure export
+    "Activity",
 ]
