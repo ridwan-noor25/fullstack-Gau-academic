@@ -181,7 +181,7 @@ export default function LecturerLayout() {
       {/* Main */}
       <div
         className={`flex-1 min-w-0 transition-all duration-300 ${
-          collapsed ? "ml-16" : "ml-64"
+          collapsed ? "ml-0" : "ml-0"
         }`}
       >
         {/* ✅ Header */}
@@ -189,7 +189,7 @@ export default function LecturerLayout() {
           <div className="px-4 sm:px-6 lg:px-8">
             <div className="h-16 flex items-center justify-between">
               {/* Left side */}
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1">
                 <button
                   type="button"
                   className="md:hidden p-2 rounded-md text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-green-500"

@@ -175,6 +175,8 @@ const nav = [
   { to: "/student/enroll", label: "Enroll Units", icon: BookOpenIcon },
   { to: "/student/grades", label: "My Grades", icon: ClipboardDocumentListIcon },
   { to: "/student/reports", label: "Missing Marks", icon: FlagIcon },
+    { to: "/student/transcript", label: "Transcript", icon: FlagIcon },
+
 ];
 
 export default function StudentSidebar({ open, onClose }) {
