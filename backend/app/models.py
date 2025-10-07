@@ -951,10 +951,18 @@ class MissingMarkReport(TimestampMixin, db.Model):
     assessment = db.relationship("Assessment", foreign_keys=[assessment_id], lazy="selectin")
 
     def to_dict(self):
+        student_name = self.student.name if self.student and self.student.name else ""
+        reg_number = self.student.reg_number if self.student and self.student.reg_number else ""
+        unit_name = self.unit.name if self.unit and hasattr(self.unit, 'name') else ""
+        unit_code = self.unit.code if self.unit and hasattr(self.unit, 'code') else ""
         return {
             "id": self.id,
             "student_id": self.student_id,
+            "student_name": student_name,
+            "reg_number": reg_number,
             "unit_id": self.unit_id,
+            "unit_name": unit_name,
+            "unit_code": unit_code,
             "assessment_id": self.assessment_id,
             "message": self.message,
             "description": self.description,

@@ -1,18 +1,44 @@
 // src/pages/lecturers/MissingMarks.jsx
-import React from "react";
+import React, { useEffect, useState } from "react";
 import LecturerLayout from "../../components/lecturer/Layout";
 import Table from "../../components/lecturer/Table";
-import useLocalStorage from "../../hooks/useLocalStorage";
 
 function MissingMarks() {
-  const [store, setStore] = useLocalStorage("gau-lecturer", { missing: [] });
+  const [rows, setRows] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  function setStatus(id, status) {
-    setStore((s) => ({
-      ...s,
-      missing: (s.missing || []).map((m) => (m.id === id ? { ...m, status } : m)),
-    }));
-  }
+  useEffect(() => {
+    async function fetchMissing() {
+      setLoading(true);
+      setError("");
+      try {
+        const res = await fetch("/api/lecturer/missing-reports", { credentials: "include" });
+        const data = await res.json();
+        if (data.items) {
+          setRows(
+            data.items.map((item) => ({
+              id: item.id,
+              student: item.student_name || item.name || item.student || "—",
+              reg: item.reg_number || item.regNo || item.reg_no || "—",
+              course: item.unit_title || item.unit_code || item.unit || "—",
+              assessment: item.assessment || "—",
+              reason: item.message || item.description || "—",
+              status: item.status || "Pending",
+            }))
+          );
+        } else {
+          setRows([]);
+        }
+      } catch (e) {
+        setError("Failed to load missing reports");
+        setRows([]);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchMissing();
+  }, []);
 
   return (
     <LecturerLayout>
@@ -23,11 +49,12 @@ function MissingMarks() {
         </div>
       </div>
 
+      {error && <div className="text-red-500 mb-2">{error}</div>}
       <Table
         columns={[
           { key: "id", header: "ID" },
-          { key: "student", header: "Student" },
-          { key: "reg", header: "Reg No." },
+          { key: "student_name", header: "Student" },
+          { key: "reg_number", header: "Reg No." },
           { key: "course", header: "Course" },
           { key: "assessment", header: "Assessment" },
           { key: "reason", header: "Reason" },
@@ -48,29 +75,9 @@ function MissingMarks() {
               </span>
             ),
           },
-          {
-            key: "actions",
-            header: "Actions",
-            render: (_v, row) => (
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setStatus(row.id, "Approved")}
-                  className="rounded-lg bg-emerald-600 px-2 py-1 text-xs text-white"
-                >
-                  Approve
-                </button>
-                <button
-                  onClick={() => setStatus(row.id, "Rejected")}
-                  className="rounded-lg bg-rose-600 px-2 py-1 text-xs text-white"
-                >
-                  Reject
-                </button>
-              </div>
-            ),
-          },
         ]}
-        data={store.missing || []}
-        empty="No requests."
+  data={rows}
+        empty={loading ? "Loading..." : "No requests."}
       />
     </LecturerLayout>
   );

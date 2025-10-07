@@ -20,7 +20,18 @@ export default function MissingReports() {
     setErr("");
     try {
       const r = await getMissingReports();
-      setItems(r);
+      // Map flat fields to nested objects for student and unit
+      setItems(r.map((item) => ({
+        ...item,
+        student: {
+          name: item.student_name || item.name || item.student || "",
+          reg_number: item.reg_number || item.regNo || item.reg_no || "",
+        },
+        unit: {
+          code: item.unit_code || "",
+          title: item.unit_title || item.unit || "",
+        },
+      })));
     } catch (e) {
       setErr(e.message || "Failed to load reports");
     }
@@ -35,7 +46,19 @@ export default function MissingReports() {
     setErr("");
     try {
       const upd = await updateMissingReport(r.id, patch);
-      setItems((prev) => prev.map((x) => (x.id === r.id ? upd : x)));
+      // Map flat fields to nested objects for student and unit
+      const mappedUpd = {
+        ...upd,
+        student: {
+          name: upd.student_name || upd.name || upd.student || "",
+          reg_number: upd.reg_number || upd.regNo || upd.reg_no || "",
+        },
+        unit: {
+          code: upd.unit_code || "",
+          title: upd.unit_title || upd.unit || "",
+        },
+      };
+      setItems((prev) => prev.map((x) => (x.id === r.id ? mappedUpd : x)));
     } catch (e) {
       setErr(e.message || "Update failed");
     } finally {
