@@ -266,6 +266,7 @@ def register():
     password = data.get("password") or ""
     role = (data.get("role") or "student").strip().lower()
     department_id = data.get("department_id")
+    reg_number = (data.get("reg_number") or data.get("regNo") or data.get("reg_no") or data.get("regNumber") or "").strip()
 
     if not all([name, email, password]):
         return jsonify(error="name, email, password required"), 400
@@ -276,6 +277,8 @@ def register():
 
     u = User(name=name, email=email, role=role)
     u.set_password(password)
+    if reg_number:
+        u.reg_number = reg_number
 
     # Special handling for HOD creation
     if role == "hod":
