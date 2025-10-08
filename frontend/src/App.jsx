@@ -443,15 +443,17 @@ import StudentDashboard from "./pages/students/dashboard/StudentDashboard";
 import MissingReport from "./Admin/pages/MissingReport";
 import MyGrades from "./pages/students/MyGrades";
 import EnrollUnits from "./pages/students/EnrollUnits";
-import Transcript from "./pages/students/Transcript";
+
 
 // ===================== HOD =====================
+
 import HodLayout from "./pages/hod/HodLayout";
 import HodDashboard from "./pages/hod/HodDashboard";
 import HodLecturers from "./pages/hod/HodLecturers";
 import HodUnits from "./pages/hod/HodUnits";
 import HodPrograms from "./pages/hod/Programs";
 import ManageStudents from "./pages/hod/ManageStudents";
+import Transcripts from "./pages/hod/Transcripts";
 
 
 
@@ -515,6 +517,7 @@ export default function App() {
           <Route path="programs" element={<HodPrograms />} />
           <Route path="students" element={<ManageStudents />} />
           <Route path="units/:unitId/students" element={<ManageStudents />} />
+           <Route path="transcripts" element={<Transcripts />} />
         </Route>
 
         {/* ===================== LECTURER ===================== */}
@@ -547,7 +550,7 @@ export default function App() {
           <Route path="dashboard" element={<StudentDashboard />} />
           <Route path="enroll" element={<EnrollUnits />} />
           <Route path="grades" element={<MyGrades />} />
-          <Route path="transcript" element={<Transcript />} />
+
           <Route path="reports" element={<MissingReport />} />
         </Route>
 

@@ -17,7 +17,8 @@ const items = [
   { name: "Dashboard", href: "/hod/dashboard", icon: Squares2X2Icon },
   { name: "Lecturers", href: "/hod/lecturers", icon: UsersIcon },
   { name: "Units & Publish", href: "/hod/units", icon: BookOpenIcon },
-  { name: "Manage Students", href: "/hod/students", icon: AcademicCapIcon }, // ✅ fixed
+  { name: "Manage Students", href: "/hod/students", icon: AcademicCapIcon },
+  { name: "Transcripts", href: "/hod/transcripts", icon: AcademicCapIcon },
 ];
 
 

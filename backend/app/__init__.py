@@ -1,16 +1,16 @@
 # # app/__init__.py
-# import os
-# from flask import Flask
-# from flask_cors import CORS
-# from .extensions import db, jwt
-# from .student import student_bp  # NEW
+import os
+from flask import Flask
+from flask_cors import CORS
+from .extensions import db, jwt, migrate
 
 
-# # Optional (only if you actually have a migrate object in extensions.py)
-# try:
-#     from .extensions import migrate
-# except Exception:
-#     migrate = None
+
+# Optional (only if you actually have a migrate object in extensions.py)
+try:
+    from .extensions import migrate
+except Exception:
+    migrate = None
 
 # # Blueprints
 # from .auth import auth_bp
@@ -38,10 +38,10 @@
 #     )
 
 #     # ----- Extensions -----
-#     db.init_app(app)
-#     jwt.init_app(app)
-#     if migrate is not None:
-#         migrate.init_app(app, db)
+    db.init_app(app)
+    jwt.init_app(app)
+    if migrate is not None:
+        migrate.init_app(app, db)
 
 #     # ----- CORS (cover all /api/*, allow both 127.0.0.1 and localhost) -----
 #     CORS(

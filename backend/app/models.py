@@ -528,6 +528,30 @@ class Department(TimestampMixin, db.Model):
     name = db.Column(db.String(160), nullable=False, unique=True, index=True)
     code = db.Column(db.String(32), nullable=False, unique=True, index=True)
 
+    parent_id = db.Column(
+        db.Integer,
+        db.ForeignKey("departments.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+
+    parent = db.relationship(
+        "Department",
+        remote_side="Department.id",
+        back_populates="children",
+        foreign_keys=[parent_id],
+        lazy="selectin",
+    )
+
+    children = db.relationship(
+        "Department",
+        back_populates="parent",
+        foreign_keys=[parent_id],
+        lazy="selectin",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+    )
+
     hod_user_id = db.Column(
         db.Integer,
         db.ForeignKey("users.id", ondelete="SET NULL"),
@@ -565,6 +589,8 @@ class Department(TimestampMixin, db.Model):
             "name": self.name,
             "code": self.code,
             "hod_user_id": self.hod_user_id,
+            "parent_id": self.parent_id,
+            "children": [child.id for child in self.children],
         }
 
 

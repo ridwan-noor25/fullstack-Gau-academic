@@ -107,4 +107,6 @@ const Transcript = () => {
   );
 };
 
-export default Transcript;
+// Transcript page removed from student side as per new requirements.
+
+// This file is intentionally left blank. Do not import.

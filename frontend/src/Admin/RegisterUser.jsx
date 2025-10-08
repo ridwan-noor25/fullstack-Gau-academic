@@ -6,7 +6,7 @@
 //   const [name, setName] = useState('')
 //   const [email, setEmail] = useState('')
 //   const [password, setPassword] = useState('')
-//   const [role, setRole] = useState('lecturer')
+//   (removed duplicate role useState)
 //   const [department_id, setDepartmentId] = useState('')
 //   const [departments, setDepartments] = useState([])
 
@@ -116,7 +116,8 @@ function RegisterUserInner() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState("lecturer");
+  // Only one declaration for role should exist. If another exists above, remove it.
+  const [role, setRole] = useState("");
   const [department_id, setDepartmentId] = useState("");
   const [departments, setDepartments] = useState([]);
 
@@ -174,7 +175,7 @@ function RegisterUserInner() {
             Create User
           </h1>
           <p className="text-sm text-gray-600 mt-1">
-            Add lecturers, students, HoDs, or admins to GAU-GradeView.
+            Add HoDs or admins to GAU-GradeView.
           </p>
         </div>
 
@@ -246,9 +247,9 @@ function RegisterUserInner() {
                 value={role}
                 onChange={(e) => setRole(e.target.value)}
                 className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2.5 bg-white focus:ring-green-600 focus:border-green-600"
+                required
               >
-                <option value="lecturer">Lecturer</option>
-                <option value="student">Student</option>
+                <option value="" disabled>Select Role…</option>
                 <option value="hod">HoD</option>
                 <option value="admin">Admin</option>
               </select>
@@ -282,7 +283,8 @@ function RegisterUserInner() {
             {/* Submit */}
             <button
               type="submit"
-              className="w-full md:w-auto bg-green-700 text-white font-medium py-2.5 px-5 rounded-lg hover:bg-green-800 transition"
+              className="w-full md:w-auto bg-green-700 text-white font-medium py-2.5 px-5 rounded-lg hover:bg-green-800 transition disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={role === "hod" ? !department_id : !role}
             >
               Create User
             </button>

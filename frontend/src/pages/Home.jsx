@@ -160,21 +160,21 @@ export default function Home() {
 
   return (
     <main className="bg-gray-100 min-h-screen w-full">
-      <div className="container mx-auto px-2 sm:px-4 md:px-8 lg:px-12 xl:px-20 2xl:px-32 max-w-screen-2xl">
+  <div className="px-2 sm:px-4 md:px-8 lg:px-12 xl:px-20 2xl:px-32 max-w-screen-xl w-full">
         {/* Hero */}
-        <section className="py-10">
-          <div className="flex flex-col lg:flex-row items-center justify-between gap-12 xl:gap-24 w-full">
+        <section className="py-14 xl:py-20">
+          <div className="flex flex-col lg:flex-row items-start justify-start gap-6 xl:gap-10 2xl:gap-12 w-full max-w-6xl">
             {/* Left content */}
-            <div className="w-full lg:w-1/2 max-w-2xl">
-              <h1 className="text-3xl sm:text-4xl md:text-5xl xl:text-6xl font-extrabold text-green-800 leading-tight text-center lg:text-left">
+            <div className="w-full lg:w-1/2 max-w-xl flex-shrink-0 lg:pr-2 xl:pr-4 2xl:pr-8">
+              <h1 className="text-3xl sm:text-4xl md:text-5xl xl:text-6xl 2xl:text-7xl font-extrabold text-green-800 leading-tight text-center lg:text-left">
                 Welcome to GAU-GradeView
               </h1>
 
               {/* Updated intro text */}
-              <p className="mt-4 text-gray-700 text-base sm:text-lg xl:text-xl text-center lg:text-left">
+              <p className="mt-4 text-gray-700 text-base sm:text-lg xl:text-xl 2xl:text-2xl text-center lg:text-left">
                 Seamlessly access academic grades, GPA summaries, and report missing marks — all in one platform designed for Garissa University students.
               </p>
-              <p className="mt-3 text-xs sm:text-sm text-gray-600 text-center lg:text-left">
+              <p className="mt-3 text-xs sm:text-sm xl:text-base 2xl:text-lg text-gray-600 text-center lg:text-left">
                 Empowering students and lecturers with a simple, reliable, and transparent way to manage academic progress at Garissa University.
               </p>
 
@@ -196,10 +196,10 @@ export default function Home() {
             </div>
 
             {/* Right illustration */}
-            <div className="w-full lg:w-1/2 flex justify-center items-center max-w-xl">
+            <div className="w-full lg:w-1/2 flex justify-center items-start max-w-md flex-shrink-0">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                className="w-48 h-48 sm:w-64 sm:h-64 xl:w-80 xl:h-80 text-green-700"
+                className="w-40 h-40 sm:w-56 sm:h-56 xl:w-64 xl:h-64 2xl:w-72 2xl:h-72 text-green-700"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -217,15 +217,15 @@ export default function Home() {
 
           {/* Why Use GAU-GradeView */}
           <div className="mt-20 md:mt-24 text-center w-full overflow-x-auto">
-            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-green-800 mb-6">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl xl:text-5xl 2xl:text-6xl font-bold text-green-800 mb-6">
               Why Use GAU-GradeView?
             </h2>
-            <p className="text-gray-700 text-base sm:text-lg max-w-3xl mx-auto mb-10 md:mb-12">
+            <p className="text-gray-700 text-base sm:text-lg xl:text-xl 2xl:text-2xl max-w-3xl mx-auto mb-10 md:mb-12">
               GAU-GradeView provides a centralized, user-friendly system that simplifies how students and faculty manage academic records, grade reports, and issue tracking — all while ensuring efficiency, accuracy, and accessibility.
             </p>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 min-w-[320px]">
-              <div className="bg-white rounded shadow-md p-6 flex flex-col items-center text-center min-h-[220px]">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 min-w-[320px] 2xl:gap-12">
+              <div className="bg-white rounded shadow-md p-6 2xl:p-10 flex flex-col items-center text-center min-h-[220px] 2xl:min-h-[260px]">
                 <AcademicCapIcon className="w-12 h-12 text-green-700 mb-4" />
                 <h3 className="font-semibold text-base md:text-lg text-green-800 mb-2">
                   Academic Clarity
