@@ -174,7 +174,7 @@ setStudents(normalizedStudents);
           (r) => !Number.isNaN(r.student_id) && !Number.isNaN(r.score)
         );
 
-      await upsertGradesBulk(editAss.id, { grades: rows });
+  await upsertGradesBulk(editAss.id, rows);
 
       const pack = await getUnitGrades(unitId);
       const map = {};
