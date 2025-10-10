@@ -199,16 +199,17 @@ function SignupPage() {
       setError("");
       setSuccess("");
 
-      const API_BASE = "http://127.0.0.1:5000";
+      const API_BASE = "http://127.0.0.1:5001";
       const res = await fetch(`${API_BASE}/api/auth/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name,
-          regNumber,
-          course,
+          reg_number: regNumber,
+          program: course,
           email,
           password,
+          role: "student",
         }),
       });
 
@@ -414,7 +415,7 @@ function SignupPage() {
                   </div>
                 </div>
 
-                {/* Row 3 */}
+                {/* Row 3 - Password Section */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {/* Password */}
                   <div>

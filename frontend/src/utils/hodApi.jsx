@@ -1,5 +1,5 @@
 // src/utils/hodApi.jsx
-const API_BASE = (import.meta.env.VITE_API_BASE || "http://127.0.0.1:5000").replace(/\/$/, "");
+const API_BASE = (import.meta.env.VITE_API_BASE || "http://127.0.0.1:5001").replace(/\/$/, "");
 const BASE = `${API_BASE}/api/hod`;
 
 const authHeaders = () => {

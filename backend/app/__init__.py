@@ -372,7 +372,7 @@ from flask import Flask
 from flask_cors import CORS
 from .extensions import db, jwt, mail
 from .student import student_bp
-from .hod_students import hod_students_bp
+from .hod_students import bp as hod_students_bp
 
 # Optional migrate
 try:
@@ -394,6 +394,12 @@ except Exception:
 
 from .units_api import units_bp
 from .reports_api import reports_bp
+
+# ✅ Import transcript blueprint
+try:
+    from .transcript import transcript_bp
+except Exception:
+    transcript_bp = None
 
 # ✅ Import admin blueprint directly from app/admin.py
 try:
@@ -458,6 +464,10 @@ def create_app():
     app.register_blueprint(units_bp)
     app.register_blueprint(reports_bp)
     app.register_blueprint(hod_students_bp)
+
+    # ✅ Register transcript blueprint
+    if transcript_bp is not None:
+        app.register_blueprint(transcript_bp)
 
     # ✅ Register Admin blueprint (already has url_prefix="/api/admin")
     if admin_bp is not None:

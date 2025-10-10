@@ -833,7 +833,7 @@ import {
 } from "@heroicons/react/24/outline";
 
 /** Env-based endpoints with safe defaults */
-const API_BASE = (import.meta.env.VITE_API_BASE || "http://127.0.0.1:5000").replace(/\/$/, "");
+const API_BASE = (import.meta.env.VITE_API_BASE || "http://127.0.0.1:5001").replace(/\/$/, "");
 const ADMIN_SUMMARY_URL = import.meta.env.VITE_ADMIN_SUMMARY_URL || "/api/admin/summary";
 const ADMIN_RECENT_URL = import.meta.env.VITE_ADMIN_RECENT_URL || "/api/admin/recent-activity";
 

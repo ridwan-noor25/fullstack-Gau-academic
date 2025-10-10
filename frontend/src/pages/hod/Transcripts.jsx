@@ -17,11 +17,27 @@ const HodTranscripts = () => {
 
   // Fetch students on mount
   useEffect(() => {
-    fetch("/api/hod/students", { credentials: "include" })
-      .then(res => res.json())
+    fetch("/api/hod/students", { 
+      credentials: "include",
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        'Content-Type': 'application/json'
+      }
+    })
+      .then(res => {
+        console.log('Fetch response status:', res.status);
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+        }
+        return res.json();
+      })
       .then(data => {
+        console.log('Students data received:', data);
         setStudents(data.items || []);
         setFilteredStudents(data.items || []);
+      })
+      .catch(err => {
+        console.error('Error fetching students:', err);
       });
   }, []);
 
@@ -47,13 +63,27 @@ const HodTranscripts = () => {
     setLoading(true);
     setSelectedStudent(s);
     setTranscriptData(null);
-    fetch(`/api/student/${s.id}/transcript`, { credentials: "include" })
-      .then(res => res.json())
+    fetch(`/api/student/${s.id}/transcript`, { 
+      credentials: "include",
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        'Content-Type': 'application/json'
+      }
+    })
+      .then(res => {
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+        }
+        return res.json();
+      })
       .then(data => {
         setTranscriptData(data);
         setLoading(false);
       })
-      .catch(() => setLoading(false));
+      .catch(err => {
+        console.error('Error fetching transcript:', err);
+        setLoading(false);
+      });
   };
 
   return (
@@ -74,10 +104,10 @@ const HodTranscripts = () => {
             ) : (
               <>
                 <HodTranscript
-                  student={selectedStudent}
-                  grades={gradesData[selectedStudent.reg_number] || []}
-                  meanGrade={meanGradeData[selectedStudent.reg_number] || "-"}
-                  summary={summaryData[selectedStudent.reg_number] || {}}
+                  student={transcriptData?.student || selectedStudent}
+                  grades={transcriptData?.transcript || []}
+                  meanGrade={transcriptData?.summary?.mean_grade || "-"}
+                  summary={transcriptData?.summary || {}}
                   date={new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
                 />
                 <button

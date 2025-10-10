@@ -267,6 +267,11 @@ def register():
     role = (data.get("role") or "student").strip().lower()
     department_id = data.get("department_id")
     reg_number = (data.get("reg_number") or data.get("regNo") or data.get("reg_no") or data.get("regNumber") or "").strip()
+    
+    # Academic year fields
+    academic_year = data.get("academic_year")
+    academic_session = (data.get("academic_session") or "").strip()
+    entry_year = data.get("entry_year")
 
     if not all([name, email, password]):
         return jsonify(error="name, email, password required"), 400
@@ -279,6 +284,15 @@ def register():
     u.set_password(password)
     if reg_number:
         u.reg_number = reg_number
+    
+    # Set academic year fields for students
+    if role == "student":
+        if academic_year:
+            u.academic_year = int(academic_year)
+        if academic_session:
+            u.academic_session = academic_session
+        if entry_year:
+            u.entry_year = int(entry_year)
 
     # Special handling for HOD creation
     if role == "hod":

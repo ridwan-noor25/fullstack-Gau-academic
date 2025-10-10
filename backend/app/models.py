@@ -604,6 +604,11 @@ class User(TimestampMixin, db.Model):
 
     reg_number = db.Column(db.String(64), unique=True, nullable=True, index=True)
     program = db.Column(db.String(160), nullable=True)
+    
+    # Academic year tracking fields
+    academic_year = db.Column(db.Integer, nullable=True, index=True)  # 1, 2, 3, 4
+    academic_session = db.Column(db.String(32), nullable=True, index=True)  # e.g., "2023/2024"
+    entry_year = db.Column(db.Integer, nullable=True, index=True)  # Year of first enrollment
 
     role = db.Column(db.String(32), nullable=False, default="student", index=True)
 
@@ -675,6 +680,32 @@ class User(TimestampMixin, db.Model):
     def check_password(self, raw: str) -> bool:
         return check_password_hash(self._password_hash, raw)
 
+    def calculate_current_academic_year(self) -> int:
+        """Calculate the current academic year based on entry year."""
+        if not self.entry_year:
+            return None
+        
+        import datetime
+        current_year = datetime.datetime.now().year
+        years_elapsed = current_year - self.entry_year
+        
+        # Assuming academic year starts in September/October
+        # If we're past October, we're in the next academic year
+        current_month = datetime.datetime.now().month
+        if current_month >= 10:  # October or later
+            years_elapsed += 1
+            
+        return min(years_elapsed, 4)  # Cap at 4 years
+
+    def update_academic_year(self):
+        """Update the academic year based on current date and entry year."""
+        if self.role == "student" and self.entry_year:
+            calculated_year = self.calculate_current_academic_year()
+            if calculated_year and calculated_year != self.academic_year:
+                self.academic_year = calculated_year
+                return True
+        return False
+
     def to_dict(self) -> dict:
         return {
             "id": self.id,
@@ -685,6 +716,10 @@ class User(TimestampMixin, db.Model):
             "department": self.department.to_dict() if self.department else None,
             "reg_number": self.reg_number,
             "program": self.program,
+            "academic_year": self.academic_year,
+            "academic_session": self.academic_session,
+            "entry_year": self.entry_year,
+            "calculated_year": self.calculate_current_academic_year() if self.role == "student" else None,
         }
 
 

@@ -25,7 +25,6 @@ export default function UnitAssessments() {
     title: "",
     weight: "",
     max_score: 100,
-    due_at: "",
   });
 
   const [editAss, setEditAss] = useState(null);
@@ -108,12 +107,11 @@ setStudents(normalizedStudents);
       title: String(form.title || "").trim(),
       weight: Number(form.weight || 0),
       max_score: Number(form.max_score || 100),
-      due_at: form.due_at || null,
     };
     try {
       const created = await createAssessment(unitId, payload);
       setItems((prev) => [...prev, created]);
-      setForm({ title: "", weight: "", max_score: 100, due_at: "" });
+      setForm({ title: "", weight: "", max_score: 100 });
     } catch (e) {
       setErr(e.message || "Failed to create assessment");
     }
@@ -242,7 +240,6 @@ setStudents(normalizedStudents);
                 <Th>Title</Th>
                 <Th>Weight (%)</Th>
                 <Th>Max</Th>
-                <Th>Due</Th>
                 <Th>Published</Th>
                 <Th className="w-60">Actions</Th>
               </tr>
@@ -251,7 +248,7 @@ setStudents(normalizedStudents);
               {items.length === 0 && (
                 <tr>
                   <td
-                    colSpan="6"
+                    colSpan="5"
                     className="px-5 py-6 text-center text-gray-500"
                   >
                     No assessments yet.
@@ -263,11 +260,6 @@ setStudents(normalizedStudents);
                   <Td className="font-medium">{a.title}</Td>
                   <Td>{a.weight ?? 0}</Td>
                   <Td>{a.max_score ?? 100}</Td>
-                  <Td>
-                    {a.due_at
-                      ? new Date(a.due_at).toLocaleString()
-                      : "—"}
-                  </Td>
                   <Td>
                     <span
                       className={`px-2 py-0.5 rounded-full text-xs ${
@@ -366,19 +358,6 @@ setStudents(normalizedStudents);
                   required
                 />
               </div>
-            </div>
-            <div>
-              <label className="block text-xs text-gray-600">
-                Due (ISO 8601, optional)
-              </label>
-              <input
-                className="mt-1 w-full rounded-md border border-gray-300 p-2 focus:ring-green-600 focus:border-green-600"
-                value={form.due_at}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, due_at: e.target.value }))
-                }
-                placeholder="2025-09-03T12:00:00"
-              />
             </div>
             <button
               type="submit"

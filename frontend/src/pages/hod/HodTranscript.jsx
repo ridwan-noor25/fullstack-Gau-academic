@@ -54,14 +54,22 @@ const HodTranscript = ({ student, grades, meanGrade, summary, date }) => {
             </tr>
           </thead>
           <tbody>
-            {grades.map(([code, title, units, grade], i) => (
-              <tr key={i}>
-                <td className="border px-2 py-1">{code}</td>
-                <td className="border px-2 py-1">{title}</td>
-                <td className="border px-2 py-1 text-center">{units}</td>
-                <td className="border px-2 py-1 text-center">{grade}</td>
-              </tr>
-            ))}
+            {grades.map((gradeItem, i) => {
+              // Handle both array format [code, title, units, grade] and object format {code, title, credits, grade}
+              const code = Array.isArray(gradeItem) ? gradeItem[0] : gradeItem.code;
+              const title = Array.isArray(gradeItem) ? gradeItem[1] : gradeItem.title;
+              const units = Array.isArray(gradeItem) ? gradeItem[2] : gradeItem.credits;
+              const grade = Array.isArray(gradeItem) ? gradeItem[3] : gradeItem.grade;
+              
+              return (
+                <tr key={i}>
+                  <td className="border px-2 py-1">{code}</td>
+                  <td className="border px-2 py-1">{title}</td>
+                  <td className="border px-2 py-1 text-center">{units}</td>
+                  <td className="border px-2 py-1 text-center">{grade}</td>
+                </tr>
+              );
+            })}
             <tr className="bg-gray-50 font-semibold">
               <td className="border px-2 py-1 text-center" colSpan={2}>MEAN GRADE</td>
               <td className="border px-2 py-1 text-center" colSpan={2}>{meanGrade}</td>
@@ -71,9 +79,10 @@ const HodTranscript = ({ student, grades, meanGrade, summary, date }) => {
       </div>
       {/* Summary */}
       <div className="mt-6 text-sm text-gray-700">
-        <p><span className="font-semibold">Total Number of Courses Taken:</span> {summary?.courses}</p>
-        <p><span className="font-semibold">Total Number of Units:</span> {summary?.units}</p>
-        <p><span className="font-semibold">Result:</span> {summary?.result}</p>
+        <p><span className="font-semibold">Total Number of Courses Taken:</span> {summary?.total_courses || grades.length}</p>
+        <p><span className="font-semibold">Total Number of Units:</span> {summary?.total_credits || '—'}</p>
+        <p><span className="font-semibold">GPA:</span> {summary?.gpa || '—'}</p>
+        <p><span className="font-semibold">Overall Grade:</span> {summary?.mean_grade || meanGrade}</p>
       </div>
       {/* Footer Notes */}
       <div className="mt-8 text-xs text-gray-600 border-t pt-4">
