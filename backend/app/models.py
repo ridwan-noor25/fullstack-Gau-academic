@@ -521,6 +521,102 @@ class TimestampMixin:
 
 
 # ---------- Core Models ----------
+class School(TimestampMixin, db.Model):
+    __tablename__ = "schools"
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(160), nullable=False, unique=True, index=True)
+    code = db.Column(db.String(32), nullable=False, unique=True, index=True)
+    description = db.Column(db.Text, nullable=True)
+
+    # Relationships
+    programs = db.relationship(
+        "Program",
+        back_populates="school",
+        lazy="selectin",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+    )
+
+    # users relationship temporarily commented out until migration is complete
+    # users = db.relationship(
+    #     "User",
+    #     back_populates="school", 
+    #     foreign_keys="User.school_id",
+    #     lazy="selectin",
+    #     passive_deletes=True,
+    # )
+
+    def to_dict(self) -> dict:
+        return {
+            "id": self.id,
+            "name": self.name,
+            "code": self.code,
+            "description": self.description,
+        }
+
+
+class Program(TimestampMixin, db.Model):
+    __tablename__ = "programs"
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(200), nullable=False, index=True)
+    degree_type = db.Column(db.String(50), nullable=True, index=True)  # Bachelor, Master, Diploma, Certificate, PhD
+    duration_years = db.Column(db.Integer, nullable=True)
+    is_active = db.Column(db.Boolean, nullable=False, default=True, index=True)
+
+    school_id = db.Column(
+        db.Integer,
+        db.ForeignKey("schools.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+
+    # HOD assignment for the program
+    hod_user_id = db.Column(
+        db.Integer,
+        db.ForeignKey("users.id", ondelete="SET NULL"),
+        nullable=True,
+    )
+
+    # Relationships
+    school = db.relationship(
+        "School",
+        back_populates="programs",
+        foreign_keys=[school_id],
+        lazy="selectin",
+    )
+
+    hod = db.relationship(
+        "User",
+        foreign_keys=[hod_user_id],
+        back_populates="hod_of_program",
+        uselist=False,
+        lazy="selectin",
+    )
+
+    # users relationship temporarily commented out until migration is complete
+    # users = db.relationship(
+    #     "User",
+    #     back_populates="program_rel",
+    #     foreign_keys="User.program_id",
+    #     lazy="selectin",
+    #     passive_deletes=True,
+    # )
+
+    def to_dict(self) -> dict:
+        return {
+            "id": self.id,
+            "name": self.name,
+            "degree_type": self.degree_type,
+            "duration_years": self.duration_years,
+            "is_active": self.is_active,
+            "school_id": self.school_id,
+            "hod_user_id": self.hod_user_id,
+            "school": self.school.to_dict() if self.school else None,
+        }
+
+
 class Department(TimestampMixin, db.Model):
     __tablename__ = "departments"
 
@@ -603,12 +699,28 @@ class User(TimestampMixin, db.Model):
     _password_hash = db.Column("password_hash", db.String(256), nullable=False)
 
     reg_number = db.Column(db.String(64), unique=True, nullable=True, index=True)
-    program = db.Column(db.String(160), nullable=True)
+    program = db.Column(db.String(160), nullable=True)  # Keep for backward compatibility
+    
+    # New school and program relationships
+    school_id = db.Column(
+        db.Integer,
+        db.ForeignKey("schools.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+    
+    program_id = db.Column(
+        db.Integer,
+        db.ForeignKey("programs.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
     
     # Academic year tracking fields
     academic_year = db.Column(db.Integer, nullable=True, index=True)  # 1, 2, 3, 4
     academic_session = db.Column(db.String(32), nullable=True, index=True)  # e.g., "2023/2024"
     entry_year = db.Column(db.Integer, nullable=True, index=True)  # Year of first enrollment
+    study_mode = db.Column(db.String(32), nullable=True, index=True)  # full-time, part-time, weekend
 
     role = db.Column(db.String(32), nullable=False, default="student", index=True)
 
@@ -626,10 +738,33 @@ class User(TimestampMixin, db.Model):
         lazy="selectin",
     )
 
+    # Temporarily commented out until columns exist
+    # school = db.relationship(
+    #     "School",
+    #     back_populates="users",
+    #     foreign_keys=[school_id],
+    #     lazy="selectin",
+    # )
+
+    # program_rel = db.relationship(
+    #     "Program",
+    #     back_populates="users",
+    #     foreign_keys=[program_id],
+    #     lazy="selectin",
+    # )
+
     hod_of_department = db.relationship(
         "Department",
         back_populates="hod",
         foreign_keys="Department.hod_user_id",
+        uselist=False,
+        lazy="selectin",
+    )
+
+    hod_of_program = db.relationship(
+        "Program",
+        back_populates="hod",
+        foreign_keys="Program.hod_user_id",
         uselist=False,
         lazy="selectin",
     )
@@ -714,11 +849,16 @@ class User(TimestampMixin, db.Model):
             "role": (self.role or "").lower(),  # ✅ ensure lowercase always
             "department_id": self.department_id,
             "department": self.department.to_dict() if self.department else None,
+            "school_id": self.school_id,
+            # "school": self.school.to_dict() if self.school else None,  # Temporarily commented
+            "program_id": self.program_id,
+            # "program_rel": self.program_rel.to_dict() if self.program_rel else None,  # Temporarily commented
             "reg_number": self.reg_number,
-            "program": self.program,
+            "program": self.program,  # Keep for backward compatibility
             "academic_year": self.academic_year,
             "academic_session": self.academic_session,
             "entry_year": self.entry_year,
+            "study_mode": self.study_mode,
             "calculated_year": self.calculate_current_academic_year() if self.role == "student" else None,
         }
 
@@ -889,6 +1029,7 @@ class Assessment(TimestampMixin, db.Model):
 
     due_at = db.Column(db.DateTime, nullable=True)
     is_published = db.Column(db.Boolean, nullable=False, default=False, index=True)
+    study_mode = db.Column(db.String(20), nullable=True, index=True)  # 'full-time', 'part-time', 'weekend'
 
     unit = db.relationship(
         "Unit",
@@ -917,6 +1058,7 @@ class Assessment(TimestampMixin, db.Model):
             "due_at": self.due_at.isoformat() if self.due_at else None,
             "is_published": self.is_published,
             "created_by": self.created_by,
+            "study_mode": self.study_mode,
         }
 
 
@@ -1059,6 +1201,8 @@ class Activity(TimestampMixin, db.Model):
 
 __all__ = [
     "db",
+    "School",
+    "Program", 
     "User",
     "Department",
     "Unit",

@@ -1,47 +1,138 @@
 from flask import Blueprint, jsonify, request
 from sqlalchemy import select, delete
 from app.extensions import db
-from app.models import User, Department, Enrollment, Unit
+from app.models import User, Department, Enrollment, Unit, Program, School
 from app.decorators import hod_required
 
 bp = Blueprint("hod_students", __name__, url_prefix="/api/hod")
 
 
 # -------------------------------------------------------------------
-# Helper to fetch the current HoD’s department
+# Helper to fetch the current HoD's department and program
 # -------------------------------------------------------------------
 def _my_department(hod_user_id: int) -> Department | None:
     return db.session.scalar(
         select(Department).where(Department.hod_user_id == hod_user_id)
     )
 
+def _my_program(hod_user_id: int) -> Program | None:
+    return db.session.scalar(
+        select(Program).where(Program.hod_user_id == hod_user_id)
+    )
+
 
 # -------------------------------------------------------------------
-# Get all students in HoD’s department (direct + via enrollments)
+# Get all students under HoD's supervision (department, program, or both)
 # -------------------------------------------------------------------
 @bp.get("/students")
 @hod_required
 def hod_department_students(me: User):
     dept = _my_department(me.id)
-    if not dept:
-        return jsonify({"error": "No department assigned to this HoD"}), 404
+    program = _my_program(me.id)
+    
+    if not dept and not program:
+        return jsonify({"error": "No department or program assigned to this HoD"}), 404
 
+    # Build query conditions based on what the HOD is responsible for
+    conditions = []
+    
+    if dept:
+        # Students directly assigned to this department
+        conditions.append(User.department_id == dept.id)
+        
+        # Students enrolled in units from this department
+        unit_condition = (
+            select(Unit.id)
+            .where(Unit.department_id == dept.id)
+        )
+        enrollment_condition = (
+            select(Enrollment.student_id)
+            .where(Enrollment.unit_id.in_(unit_condition))
+        )
+        conditions.append(User.id.in_(enrollment_condition))
+    
+    if program:
+        # Students enrolled in this specific program
+        conditions.append(User.program_id == program.id)
+    
+    # Combine conditions with OR
+    from sqlalchemy import or_
+    final_condition = or_(*conditions) if conditions else False
+    
     students = (
         db.session.execute(
             select(User)
-            .outerjoin(Enrollment, Enrollment.student_id == User.id)
-            .outerjoin(Unit, Unit.id == Enrollment.unit_id)
             .where(User.role == "student")
-            .where(
-                (User.department_id == dept.id) | (Unit.department_id == dept.id)
-            )
+            .where(final_condition)
             .distinct()
         )
         .scalars()
         .all()
     )
 
-    return jsonify({"items": [s.to_dict() for s in students]})
+    # Add additional context about HOD supervision scope
+    supervision_scope = {
+        "department": dept.to_dict() if dept else None,
+        "program": program.to_dict() if program else None,
+    }
+
+    return jsonify({
+        "items": [s.to_dict() for s in students],
+        "supervision_scope": supervision_scope,
+        "total_students": len(students)
+    })
+
+
+# -------------------------------------------------------------------
+# Get students filtered by school and/or program (for HODs with broader access)
+# -------------------------------------------------------------------
+@bp.get("/students/by-school-program")
+@hod_required
+def hod_students_by_school_program(me: User):
+    school_id = request.args.get("school_id", type=int)
+    program_id = request.args.get("program_id", type=int)
+    
+    # Check if HOD has access to the requested school/program
+    dept = _my_department(me.id)
+    program = _my_program(me.id)
+    
+    query = select(User).where(User.role == "student")
+    conditions = []
+    
+    # Apply filters based on request parameters
+    if school_id:
+        conditions.append(User.school_id == school_id)
+    if program_id:
+        conditions.append(User.program_id == program_id)
+    
+    # Add authorization check - HOD can only see students from their scope
+    auth_conditions = []
+    if dept:
+        auth_conditions.append(User.department_id == dept.id)
+    if program:
+        auth_conditions.append(User.program_id == program.id)
+        # If HOD has a program, they can also see students from the same school
+        if program.school_id:
+            auth_conditions.append(User.school_id == program.school_id)
+    
+    if auth_conditions:
+        from sqlalchemy import or_
+        conditions.append(or_(*auth_conditions))
+    
+    if conditions:
+        from sqlalchemy import and_
+        query = query.where(and_(*conditions))
+    
+    students = db.session.execute(query.distinct()).scalars().all()
+    
+    return jsonify({
+        "items": [s.to_dict() for s in students],
+        "filters_applied": {
+            "school_id": school_id,
+            "program_id": program_id
+        },
+        "total_students": len(students)
+    })
 
 
 # -------------------------------------------------------------------

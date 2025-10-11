@@ -72,6 +72,9 @@ def unit_students(unit_id: int):
     if not u:
         return jsonify(error="user not found"), 404
 
+    # Get study mode filter from query parameters
+    study_mode = request.args.get("study_mode", "").strip().lower()
+    
     # ensure this unit is taught by the current lecturer
     unit = (
         Unit.query.join(TeachingAssignment, TeachingAssignment.unit_id == Unit.id)
@@ -82,7 +85,7 @@ def unit_students(unit_id: int):
         return jsonify(error="unit not found or not yours"), 404
 
     # JOIN Enrollment -> User to fetch student fields used by the UI
-    rows = (
+    query = (
         db.session.query(
             Enrollment.id.label("enroll_id"),
             User.id.label("student_id"),
@@ -90,12 +93,18 @@ def unit_students(unit_id: int):
             User.reg_number.label("reg_number"),
             User.email.label("email"),
             User.program.label("program"),
+            User.study_mode.label("study_mode"),
+            User.academic_year.label("academic_year"),
         )
         .join(User, User.id == Enrollment.student_id)
         .filter(Enrollment.unit_id == unit.id)
-        .order_by(User.name.asc())
-        .all()
     )
+    
+    # Apply study mode filter if provided
+    if study_mode and study_mode in ["full-time", "part-time", "weekend"]:
+        query = query.filter(User.study_mode.ilike(f"%{study_mode}%"))
+    
+    rows = query.order_by(User.name.asc()).all()
 
     def map_row(r):
         name = (r.student_name or "").strip()
@@ -114,6 +123,8 @@ def unit_students(unit_id: int):
                 "reg_number": reg_val,
                 "email": email,
                 "program": r.program or "",
+                "study_mode": r.study_mode or "",
+                "academic_year": r.academic_year,
             },
             "name": name,
             "student_name": name,
@@ -122,10 +133,27 @@ def unit_students(unit_id: int):
             "reg_no": reg_val,
             "email": email,
             "program": r.program or "",
+            "study_mode": r.study_mode or "",
+            "academic_year": r.academic_year,
         }
 
     items = [map_row(r) for r in rows]
-    return jsonify(items=items, count=len(items)), 200
+    
+    # Add summary statistics for study modes
+    study_mode_stats = {}
+    for item in items:
+        mode = item.get("study_mode", "unknown").lower()
+        study_mode_stats[mode] = study_mode_stats.get(mode, 0) + 1
+    
+    response_data = {
+        "items": items, 
+        "count": len(items),
+        "study_mode_filter": study_mode if study_mode else "all",
+        "study_mode_stats": study_mode_stats,
+        "available_study_modes": ["full-time", "part-time", "weekend"]
+    }
+    
+    return jsonify(response_data), 200
 
 
 # ---------- Assessments ----------
@@ -174,9 +202,15 @@ def create_assessment(unit_id: int):
     weight = float(data.get("weight") or 0)
     max_score = float(data.get("max_score") or 100)
     due_at = data.get("due_at")
+    study_mode = (data.get("study_mode") or "").strip() or None
 
     if not title:
         return jsonify(error="title required"), 400
+
+    # Validate study_mode if provided
+    valid_study_modes = ['full-time', 'part-time', 'weekend']
+    if study_mode and study_mode not in valid_study_modes:
+        return jsonify(error=f"invalid study_mode, must be one of: {valid_study_modes}"), 400
 
     total_weight = (
         db.session.query(db.func.coalesce(db.func.sum(Assessment.weight), 0))
@@ -192,6 +226,7 @@ def create_assessment(unit_id: int):
         weight=weight,
         max_score=max_score,
         due_at=datetime.fromisoformat(due_at) if due_at else None,
+        study_mode=study_mode,
     )
     db.session.add(a)
     db.session.commit()

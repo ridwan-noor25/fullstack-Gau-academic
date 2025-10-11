@@ -126,6 +126,7 @@ function RegisterUserInner() {
   const [academicSession, setAcademicSession] = useState("");
   const [entryYear, setEntryYear] = useState("");
   const [regNumber, setRegNumber] = useState("");
+  const [studyMode, setStudyMode] = useState("");
 
   const [msg, setMsg] = useState("");
   const [err, setErr] = useState("");
@@ -147,8 +148,8 @@ function RegisterUserInner() {
       return;
     }
 
-    if (role === "student" && (!academicYear || !academicSession || !entryYear)) {
-      setErr("Please fill in all academic year fields for students.");
+    if (role === "student" && (!academicYear || !studyMode)) {
+      setErr("Please fill in academic year and study mode for students.");
       return;
     }
 
@@ -165,8 +166,9 @@ function RegisterUserInner() {
       if (role === "student") {
         body.reg_number = regNumber;
         body.academic_year = parseInt(academicYear);
-        body.academic_session = academicSession;
-        body.entry_year = parseInt(entryYear);
+        body.study_mode = studyMode;
+        if (academicSession) body.academic_session = academicSession;
+        if (entryYear) body.entry_year = parseInt(entryYear);
       }
 
       const res = await api.request("/auth/register", {
@@ -183,7 +185,7 @@ function RegisterUserInner() {
       setAcademicYear("");
       setAcademicSession("");
       setEntryYear("");
-      setDepartmentId("");
+      setStudyMode("");
     } catch (e) {
       setErr(String(e.message || e));
     }
@@ -460,6 +462,38 @@ function RegisterUserInner() {
                         </select>
                       </div>
                     </div>
+                  </div>
+                </div>
+
+                {/* Study Mode Field */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Study Mode
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <div className="w-5 h-5 bg-gradient-to-br from-indigo-400 to-indigo-600 rounded-full flex items-center justify-center">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-3 w-3 text-white"
+                          viewBox="0 0 20 20"
+                          fill="currentColor"
+                        >
+                          <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
+                        </svg>
+                      </div>
+                    </div>
+                    <select
+                      value={studyMode}
+                      onChange={(e) => setStudyMode(e.target.value)}
+                      required
+                      className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg bg-white shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200"
+                    >
+                      <option value="">Select Study Mode...</option>
+                      <option value="full-time">📚 Full-time</option>
+                      <option value="part-time">🏫 Part-time/School-based</option>
+                      <option value="weekend">🗓️ Weekend</option>
+                    </select>
                   </div>
                 </div>
               </div>

@@ -158,7 +158,7 @@
 // export default SignupPage;
 
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 
 function SignupPage() {
@@ -166,24 +166,77 @@ function SignupPage() {
     name: "",
     regNumber: "",
     course: "",
+    school_id: "",
+    program_id: "",
     email: "",
     password: "",
     confirmPassword: "",
+    academicYear: "",
+    studyMode: "",
   });
 
+  const [schools, setSchools] = useState([]);
+  const [programs, setPrograms] = useState([]);
+  const [loadingPrograms, setLoadingPrograms] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  const handleChange = (e) =>
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+  const API_BASE = "http://127.0.0.1:5001";
+
+  // Fetch schools on component mount
+  useEffect(() => {
+    fetchSchools();
+  }, []);
+
+  // Fetch programs when school is selected
+  useEffect(() => {
+    if (formData.school_id) {
+      fetchPrograms(formData.school_id);
+    } else {
+      setPrograms([]);
+      setFormData(prev => ({ ...prev, program_id: "" }));
+    }
+  }, [formData.school_id]);
+
+  const fetchSchools = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/api/auth/schools`);
+      if (res.ok) {
+        const data = await res.json();
+        setSchools(data);
+      }
+    } catch (err) {
+      console.error("Failed to fetch schools:", err);
+    }
+  };
+
+  const fetchPrograms = async (schoolId) => {
+    setLoadingPrograms(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/auth/schools/${schoolId}/programs`);
+      if (res.ok) {
+        const data = await res.json();
+        setPrograms(data);
+      }
+    } catch (err) {
+      console.error("Failed to fetch programs:", err);
+    } finally {
+      setLoadingPrograms(false);
+    }
+  };
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const { name, regNumber, course, email, password, confirmPassword } =
+    const { name, regNumber, email, password, confirmPassword, school_id, program_id, academicYear, studyMode } =
       formData;
 
-    if (!name || !regNumber || !course || !email || !password || !confirmPassword) {
+    if (!name || !regNumber || !email || !password || !confirmPassword || !school_id || !program_id || !academicYear || !studyMode) {
       setError("Please fill in all fields.");
       setSuccess("");
       return;
@@ -199,17 +252,19 @@ function SignupPage() {
       setError("");
       setSuccess("");
 
-      const API_BASE = "http://127.0.0.1:5001";
       const res = await fetch(`${API_BASE}/api/auth/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name,
           reg_number: regNumber,
-          program: course,
           email,
           password,
           role: "student",
+          school_id: parseInt(school_id),
+          program_id: parseInt(program_id),
+          academic_year: parseInt(academicYear),
+          study_mode: studyMode,
         }),
       });
 
@@ -228,9 +283,13 @@ function SignupPage() {
         name: "",
         regNumber: "",
         course: "",
+        school_id: "",
+        program_id: "",
         email: "",
         password: "",
         confirmPassword: "",
+        academicYear: "",
+        studyMode: "",
       });
     } catch {
       setError("Network error. Please try again.");
@@ -356,10 +415,42 @@ function SignupPage() {
 
                 {/* Row 2 */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* Course */}
+                  {/* School */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700">
-                      Course
+                      School
+                    </label>
+                    <div className="relative mt-1">
+                      <span className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-5 w-5 text-gray-400"
+                          viewBox="0 0 20 20"
+                          fill="currentColor"
+                        >
+                          <path d="M10.394 2.08a1 1 0 00-.788 0l-7 3a1 1 0 000 1.84L5.25 8.051a.999.999 0 01.356-.257l4-1.714a1 1 0 11.788 1.838L7.667 9.088l1.94.831a1 1 0 00.787 0l7-3a1 1 0 000-1.838l-7-3z" />
+                        </svg>
+                      </span>
+                      <select
+                        name="school_id"
+                        className="w-full rounded-md border border-gray-300 bg-white p-2.5 pl-10 shadow-sm focus:border-green-600 focus:ring-green-600"
+                        onChange={handleChange}
+                        value={formData.school_id}
+                      >
+                        <option value="">Select School</option>
+                        {schools.map((school) => (
+                          <option key={school.id} value={school.id}>
+                            {school.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Program */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Program
                     </label>
                     <div className="relative mt-1">
                       <span className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
@@ -373,22 +464,71 @@ function SignupPage() {
                           <path d="M18 8l-8 4-8-4v6a2 2 0 002 2h12a2 2 0 002-2V8z" />
                         </svg>
                       </span>
-                      <input
-                        type="text"
-                        name="course"
-                        placeholder="e.g., BSc. Computer Science"
+                      <select
+                        name="program_id"
                         className="w-full rounded-md border border-gray-300 bg-white p-2.5 pl-10 shadow-sm focus:border-green-600 focus:ring-green-600"
                         onChange={handleChange}
-                        value={formData.course}
-                        autoComplete="organization-title"
-                      />
+                        value={formData.program_id}
+                        disabled={!formData.school_id || loadingPrograms}
+                      >
+                        <option value="">
+                          {!formData.school_id 
+                            ? "Select School First" 
+                            : loadingPrograms 
+                            ? "Loading Programs..." 
+                            : "Select Program"
+                          }
+                        </option>
+                        {programs.map((program) => (
+                          <option key={program.id} value={program.id}>
+                            {program.name} ({program.degree_type})
+                          </option>
+                        ))}
+                      </select>
                     </div>
+                    {formData.school_id && programs.length > 0 && (
+                      <p className="mt-1 text-xs text-gray-500">
+                        Choose your specific program from {schools.find(s => s.id == formData.school_id)?.name}
+                      </p>
+                    )}
                   </div>
+                </div>
 
-                  {/* Email */}
+                {/* Row 3 - Email */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Email Address
+                  </label>
+                  <div className="relative mt-1">
+                    <span className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-5 w-5 text-gray-400"
+                        viewBox="0 0 20 20"
+                        fill="currentColor"
+                      >
+                        <path d="M2.94 6.34A2 2 0 014.6 5h10.8a2 2 0 011.66.94L10 10.5 2.94 6.34z" />
+                        <path d="M18 8.118l-8 4.882-8-4.882V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
+                      </svg>
+                    </span>
+                    <input
+                      type="email"
+                      name="email"
+                      placeholder="you@example.com"
+                      className="w-full rounded-md border border-gray-300 bg-white p-2.5 pl-10 shadow-sm focus:border-green-600 focus:ring-green-600"
+                      onChange={handleChange}
+                      value={formData.email}
+                      autoComplete="email"
+                    />
+                  </div>
+                </div>
+
+                {/* Row 4 - Academic Information */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Academic Year */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700">
-                      Email Address
+                      Current Academic Year
                     </label>
                     <div className="relative mt-1">
                       <span className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
@@ -398,24 +538,56 @@ function SignupPage() {
                           viewBox="0 0 20 20"
                           fill="currentColor"
                         >
-                          <path d="M2.94 6.34A2 2 0 014.6 5h10.8a2 2 0 011.66.94L10 10.5 2.94 6.34z" />
-                          <path d="M18 8.118l-8 4.882-8-4.882V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
+                          <path d="M10.394 2.08a1 1 0 00-.788 0l-7 3a1 1 0 000 1.84L5.25 8.051a.999.999 0 01.356-.257l4-1.714a1 1 0 11.788 1.838L7.667 9.088l1.94.831a1 1 0 00.787 0l7-3a1 1 0 000-1.838l-7-3z" />
                         </svg>
                       </span>
-                      <input
-                        type="email"
-                        name="email"
-                        placeholder="you@example.com"
+                      <select
+                        name="academicYear"
                         className="w-full rounded-md border border-gray-300 bg-white p-2.5 pl-10 shadow-sm focus:border-green-600 focus:ring-green-600"
                         onChange={handleChange}
-                        value={formData.email}
-                        autoComplete="email"
-                      />
+                        value={formData.academicYear}
+                      >
+                        <option value="">Select Year</option>
+                        <option value="1">Year 1</option>
+                        <option value="2">Year 2</option>
+                        <option value="3">Year 3</option>
+                        <option value="4">Year 4</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Study Mode */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Study Mode
+                    </label>
+                    <div className="relative mt-1">
+                      <span className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-5 w-5 text-gray-400"
+                          viewBox="0 0 20 20"
+                          fill="currentColor"
+                        >
+                          <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
+                        </svg>
+                      </span>
+                      <select
+                        name="studyMode"
+                        className="w-full rounded-md border border-gray-300 bg-white p-2.5 pl-10 shadow-sm focus:border-green-600 focus:ring-green-600"
+                        onChange={handleChange}
+                        value={formData.studyMode}
+                      >
+                        <option value="">Select Study Mode</option>
+                        <option value="full-time">Full-time</option>
+                        <option value="part-time">Part-time/School-based</option>
+                        <option value="weekend">Weekend</option>
+                      </select>
                     </div>
                   </div>
                 </div>
 
-                {/* Row 3 - Password Section */}
+                {/* Row 4 - Password Section */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {/* Password */}
                   <div>

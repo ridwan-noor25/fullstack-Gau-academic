@@ -1,5 +1,6 @@
 import React from "react";
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
+import { useAuth } from "../../auth/AuthContext";
 import {
   HomeIcon,
   PlusCircleIcon,
@@ -8,6 +9,7 @@ import {
   AcademicCapIcon,
   ClipboardDocumentListIcon,
   MegaphoneIcon,
+  ArrowRightOnRectangleIcon,
 } from "@heroicons/react/24/outline";
 
 const nav = [
@@ -21,6 +23,14 @@ const nav = [
 ];
 
 export default function AdminSidebar({ onNavigate }) {
+  const navigate = useNavigate();
+  const { logout: authLogout } = useAuth();
+
+  const logout = () => {
+    authLogout(); // Clear auth context state
+    window.location.href = "/"; // Use window.location to bypass React Router
+  };
+
   return (
     <div className="flex h-full w-64 flex-col border-r border-gray-200 bg-white">
       {/* Brand */}
@@ -51,7 +61,17 @@ export default function AdminSidebar({ onNavigate }) {
         ))}
       </nav>
 
+      {/* Footer */}
       <div className="border-t p-3">
+        {/* Logout button */}
+        <button
+          onClick={logout}
+          className="mb-3 flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-gray-700 transition hover:bg-gray-50"
+        >
+          <ArrowRightOnRectangleIcon className="h-5 w-5" />
+          <span>Logout</span>
+        </button>
+        
         <p className="text-[11px] text-gray-500">Garissa University · GAU-GradeView</p>
       </div>
     </div>

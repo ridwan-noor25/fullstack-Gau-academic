@@ -1,78 +1,6 @@
-// // src/pages/lecturers/LecturerSidebar.jsx
-// import { Link, useLocation } from "react-router-dom";
-// import {
-//   HomeIcon,
-//   BookOpenIcon,
-//   UsersIcon,
-//   InboxIcon,
-//   ArrowRightOnRectangleIcon,
-// } from "@heroicons/react/24/outline";
-
-// export default function LecturerSidebar({ onNavigate }) {
-//   const loc = useLocation();
-//   const items = [
-//     { name: "Dashboard", href: "/lecturer/dashboard", icon: HomeIcon },
-//     { name: "My Units", href: "/lecturer/units", icon: BookOpenIcon },
-//     { name: "Missing Reports", href: "/lecturer/missing-reports", icon: InboxIcon },
-//   ];
-//   const isActive = (p) => loc.pathname === p || loc.pathname.startsWith(p + "/");
-
-//   function logout() {
-//     localStorage.removeItem("token");
-//     localStorage.removeItem("user");
-//     localStorage.removeItem("lecturer");
-//     window.location.href = "/login";
-//   }
-
-//   return (
-//     <div className="h-full w-64 border-r bg-white flex flex-col">
-//       <div className="h-16 border-b flex items-center justify-center">
-//         <div className="text-center">
-//           <h1 className="font-bold">GAU-GradeView</h1>
-//           <p className="text-xs text-gray-500">Lecturer Portal</p>
-//         </div>
-//       </div>
-
-//       <nav className="flex-1 overflow-y-auto p-2 space-y-1">
-//         {items.map((it) => {
-//           const ActiveIcon = it.icon;
-//           const active = isActive(it.href);
-//           return (
-//             <Link
-//               key={it.name}
-//               to={it.href}
-//               onClick={onNavigate}
-//               className={`flex items-center gap-3 px-4 py-2 rounded-md transition ${
-//                 active
-//                   ? "bg-gray-100 text-green-800 font-semibold border-l-4 border-green-700"
-//                   : "text-gray-700 hover:bg-gray-100"
-//               }`}
-//             >
-//               <ActiveIcon className="w-5 h-5" /> {it.name}
-//             </Link>
-//           );
-//         })}
-//       </nav>
-
-//       <div className="border-t p-3">
-//         <button
-//           onClick={logout}
-//           className="w-full flex items-center gap-3 px-4 py-2 rounded-md text-gray-700 hover:bg-gray-100 transition"
-//         >
-//           <ArrowRightOnRectangleIcon className="w-5 h-5" />
-//           Logout
-//         </button>
-//       </div>
-//     </div>
-//   );
-// }
-
-
-
-
-
-// src/pages/lecturers/LecturerSidebar.jsx
 import { Link, useLocation } from "react-router-dom";
+import { useState } from "react";
+import { useAuth } from "../../auth/AuthContext";
 import {
   HomeIcon,
   BookOpenIcon,
@@ -80,85 +8,98 @@ import {
   ArrowRightOnRectangleIcon,
   Bars3Icon,
 } from "@heroicons/react/24/outline";
-import { useState } from "react";
 
 export default function LecturerSidebar({ onNavigate }) {
-  const loc = useLocation();
-  const [collapsed, setCollapsed] = useState(true); // ✅ default collapsed (icons only)
+  const location = useLocation();
+  const { logout } = useAuth();
+  const [isCollapsed, setIsCollapsed] = useState(false);
 
-  const items = [
-    { name: "Dashboard", href: "/lecturer/dashboard", icon: HomeIcon },
-    { name: "My Units", href: "/lecturer/units", icon: BookOpenIcon },
-    { name: "Missing Reports", href: "/lecturer/missing-reports", icon: InboxIcon },
+  const menuItems = [
+    { 
+      name: "Dashboard", 
+      href: "/lecturer/dashboard", 
+      icon: HomeIcon 
+    },
+    { 
+      name: "My Units", 
+      href: "/lecturer/units", 
+      icon: BookOpenIcon 
+    },
+    { 
+      name: "Missing Reports", 
+      href: "/lecturer/missing-reports", 
+      icon: InboxIcon 
+    },
   ];
-  const isActive = (p) => loc.pathname === p || loc.pathname.startsWith(p + "/");
 
-  function logout() {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    localStorage.removeItem("lecturer");
-    window.location.href = "/login";
-  }
+  const isActive = (path) => {
+    return location.pathname === path || location.pathname.startsWith(path + "/");
+  };
+
+  const handleLogout = () => {
+    logout();
+  };
+
+  const toggleSidebar = () => {
+    setIsCollapsed(!isCollapsed);
+  };
 
   return (
-    <div
-      className={`h-full ${
-        collapsed ? "w-16" : "w-64"
-      } border-r bg-white flex flex-col transition-all duration-300`}
-    >
-      {/* Header with collapse button */}
-      <div className="h-16 border-b flex items-center justify-between px-2">
-        {!collapsed && (
+    <div className={`h-full border-r bg-white flex flex-col transition-all duration-300 ${
+      isCollapsed ? 'w-16' : 'w-64'
+    }`}>
+      {/* Header */}
+      <div className="h-16 border-b flex items-center justify-between px-4">
+        {!isCollapsed && (
           <div className="text-center flex-1">
-            <h1 className="font-bold text-green-800 text-sm">GAU-GradeView</h1>
-            <p className="text-[11px] text-gray-500">Lecturer Portal</p>
+            <h1 className="font-bold text-lg">GAU-GradeView</h1>
+            <p className="text-xs text-gray-500">Lecturer Portal</p>
           </div>
         )}
         <button
-          onClick={() => setCollapsed((v) => !v)}
-          className="p-2 rounded-md hover:bg-gray-100"
+          onClick={toggleSidebar}
+          className="p-2 rounded-md hover:bg-gray-100 transition"
         >
-          <Bars3Icon className="w-5 h-5 text-gray-700" />
+          <Bars3Icon className="w-5 h-5" />
         </button>
       </div>
 
-      {/* Nav links */}
+      {/* Navigation */}
       <nav className="flex-1 overflow-y-auto p-2 space-y-1">
-        {items.map((it) => {
-          const ActiveIcon = it.icon;
-          const active = isActive(it.href);
+        {menuItems.map((item) => {
+          const Icon = item.icon;
+          const active = isActive(item.href);
+          
           return (
             <Link
-              key={it.name}
-              to={it.href}
+              key={item.name}
+              to={item.href}
               onClick={onNavigate}
-              className={`flex items-center ${
-                collapsed ? "justify-center" : "gap-3 px-4"
-              } py-2 rounded-md transition ${
+              className={`flex items-center gap-3 px-4 py-3 rounded-md transition-all duration-200 ${
                 active
-                  ? "bg-gray-100 text-green-800 font-semibold border-l-4 border-green-700"
+                  ? "bg-blue-50 text-blue-700 font-semibold border-l-4 border-blue-600"
                   : "text-gray-700 hover:bg-gray-100"
-              }`}
-              title={collapsed ? it.name : undefined} // ✅ Tooltip when collapsed
+              } ${isCollapsed ? 'justify-center' : ''}`}
+              title={isCollapsed ? item.name : ''}
             >
-              <ActiveIcon className="w-5 h-5" />
-              {!collapsed && it.name}
+              <Icon className="w-5 h-5 flex-shrink-0" />
+              {!isCollapsed && <span>{item.name}</span>}
             </Link>
           );
         })}
       </nav>
 
-      {/* Logout button */}
+      {/* Logout Button */}
       <div className="border-t p-3">
         <button
-          onClick={logout}
-          className={`w-full flex items-center ${
-            collapsed ? "justify-center" : "gap-3 px-4"
-          } py-2 rounded-md text-gray-700 hover:bg-gray-100 transition`}
-          title={collapsed ? "Logout" : undefined}
+          onClick={handleLogout}
+          className={`w-full flex items-center gap-3 px-4 py-3 rounded-md text-gray-700 hover:bg-red-50 hover:text-red-600 transition-all duration-200 ${
+            isCollapsed ? 'justify-center' : ''
+          }`}
+          title={isCollapsed ? 'Logout' : ''}
         >
-          <ArrowRightOnRectangleIcon className="w-5 h-5" />
-          {!collapsed && "Logout"}
+          <ArrowRightOnRectangleIcon className="w-5 h-5 flex-shrink-0" />
+          {!isCollapsed && <span>Logout</span>}
         </button>
       </div>
     </div>

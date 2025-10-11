@@ -54,61 +54,69 @@ export default function UnitStudents() {
   const [grades, setGrades] = useState({}); // { student_id: { marks, grade } }
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState("");
+  const [studyModeFilter, setStudyModeFilter] = useState("");
+  const [studyModeStats, setStudyModeStats] = useState({});
+  const [availableStudyModes, setAvailableStudyModes] = useState([]);
+
+  const loadData = async (studyMode = "") => {
+    setLoading(true);
+    setErr("");
+    try {
+      const [studentsRes, gradesRes] = await Promise.all([
+        getUnitStudents(unitId, studyMode || null),
+        getUnitGrades(unitId),
+      ]);
+      
+      console.log("[UnitStudents] studentsRes", studentsRes);
+      console.log("[UnitStudents] gradesRes", gradesRes);
+      
+      // Handle new API response format
+      const studentsData = Array.isArray(studentsRes) ? studentsRes : studentsRes?.items || [];
+      setItems(studentsData);
+      setStudyModeStats(studentsRes?.study_mode_stats || {});
+      setAvailableStudyModes(studentsRes?.available_study_modes || ["full-time", "part-time", "weekend"]);
+      
+      // Process grades (existing logic)
+      const studentScores = {};
+      let totalMax = 0;
+      const assessments = (gradesRes || []).map((g) => g.assessment).filter(Boolean);
+      totalMax = assessments.reduce((acc, a) => acc + (Number(a.max_score) || 0), 0);
+      
+      (gradesRes || []).forEach(({ assessment, grades }) => {
+        if (!assessment || !Array.isArray(grades)) return;
+        grades.forEach((g) => {
+          if (!studentScores[g.student_id]) studentScores[g.student_id] = { score: 0 };
+          studentScores[g.student_id].score += Number(g.score) || 0;
+        });
+      });
+      
+      const marksMap = {};
+      Object.entries(studentScores).forEach(([sid, { score }]) => {
+        const marks = totalMax > 0 ? (score * 100) / totalMax : 0;
+        let grade = "—";
+        if (marks >= 70) grade = "A";
+        else if (marks >= 60) grade = "B";
+        else if (marks >= 50) grade = "C";
+        else if (marks >= 40) grade = "D";
+        else if (marks >= 0) grade = "Supp";
+        marksMap[sid] = { marks: Math.round(marks), grade };
+      });
+      
+      setGrades(marksMap);
+    } catch (error) {
+      setErr(error.message || "Failed to load data");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    let on = true;
-    async function load() {
-      setLoading(true);
-      setErr("");
-      try {
-        const [studentsRes, gradesRes] = await Promise.all([
-          getUnitStudents(unitId),
-          getUnitGrades(unitId),
-        ]);
-        if (!on) return;
-        // Debug output
-        // eslint-disable-next-line no-console
-        console.log("[UnitStudents] studentsRes", studentsRes);
-        // eslint-disable-next-line no-console
-        console.log("[UnitStudents] gradesRes", gradesRes);
-        setItems(Array.isArray(studentsRes) ? studentsRes : []);
-        // gradesRes: [{ assessment, grades: [{student_id, score, ...}] }]
-        // Sum all published grades per student, scale to 100
-        const studentScores = {};
-        let totalMax = 0;
-        // Find all assessments' max_score
-        const assessments = (gradesRes || []).map((g) => g.assessment).filter(Boolean);
-        totalMax = assessments.reduce((acc, a) => acc + (Number(a.max_score) || 0), 0);
-        // For each student, sum their scores
-        (gradesRes || []).forEach(({ assessment, grades }) => {
-          if (!assessment || !Array.isArray(grades)) return;
-          grades.forEach((g) => {
-            if (!studentScores[g.student_id]) studentScores[g.student_id] = { score: 0 };
-            studentScores[g.student_id].score += Number(g.score) || 0;
-          });
-        });
-        // Compute marks and grade for each student
-        const marksMap = {};
-        Object.entries(studentScores).forEach(([sid, { score }]) => {
-          const marks = totalMax > 0 ? (score * 100) / totalMax : 0;
-          let grade = "—";
-          if (marks >= 70) grade = "A";
-          else if (marks >= 60) grade = "B";
-          else if (marks >= 50) grade = "C";
-          else if (marks >= 40) grade = "D";
-          else if (marks >= 0) grade = "Supp";
-          marksMap[sid] = { marks: Math.round(marks), grade };
-        });
-        setGrades(marksMap);
-      } catch (e) {
-        if (on) setErr(e.message || "Failed to load students");
-      } finally {
-        if (on) setLoading(false);
-      }
-    }
-    load();
-    return () => { on = false; };
-  }, [unitId]);
+    loadData(studyModeFilter);
+  }, [unitId, studyModeFilter]);
+
+  const handleStudyModeChange = (newStudyMode) => {
+    setStudyModeFilter(newStudyMode);
+  };
 
   // Normalize to consistent display rows regardless of server shape
   // Helper to compute marks and grade (out of 100, missing as zero)
@@ -146,6 +154,9 @@ export default function UnitStudents() {
 
       const reg = cleanRegNo(rawReg) || "—";
 
+      // Get study mode
+      const study_mode = pickFirst(s, ["study_mode", "studyMode", "mode"]) || "";
+
       // Choose a stable key
       const key = String(
         it?.id ??
@@ -161,7 +172,7 @@ export default function UnitStudents() {
         grade = grades[s.id].grade;
       }
 
-      return { key, name, reg, marks, grade };
+      return { key, name, reg, study_mode, marks, grade };
     });
   }, [items, grades]);
 
@@ -188,6 +199,44 @@ export default function UnitStudents() {
         </div>
       </div>
 
+      {/* Study Mode Filter */}
+      <div className="mb-4 flex items-center gap-4">
+        <div className="flex items-center gap-2">
+          <label htmlFor="study-mode-filter" className="text-sm font-medium text-gray-700">
+            Filter by Study Mode:
+          </label>
+          <select
+            id="study-mode-filter"
+            value={studyModeFilter}
+            onChange={(e) => handleStudyModeChange(e.target.value)}
+            className="rounded-md border border-gray-300 px-3 py-1.5 text-sm focus:border-green-500 focus:ring-green-500"
+          >
+            <option value="">All Students</option>
+            {availableStudyModes.map((mode) => (
+              <option key={mode} value={mode}>
+                {mode.charAt(0).toUpperCase() + mode.slice(1).replace('-', ' ')}
+              </option>
+            ))}
+          </select>
+        </div>
+        
+        {/* Study Mode Statistics */}
+        {Object.keys(studyModeStats).length > 0 && (
+          <div className="flex items-center gap-2 text-xs text-gray-600">
+            <span>Distribution:</span>
+            {Object.entries(studyModeStats).map(([mode, count]) => (
+              <span 
+                key={mode} 
+                className="px-2 py-1 bg-gray-100 rounded-full"
+                title={`${mode.charAt(0).toUpperCase() + mode.slice(1)}: ${count} students`}
+              >
+                {mode.charAt(0).toUpperCase() + mode.slice(1)}: {count}
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
+
       {err && (
         <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
           {err}
@@ -200,6 +249,7 @@ export default function UnitStudents() {
             <tr>
               <Th>Name</Th>
               <Th>Reg No</Th>
+              <Th>Study Mode</Th>
               <Th>Marks</Th>
               <Th>Grade</Th>
             </tr>
@@ -207,8 +257,8 @@ export default function UnitStudents() {
           <tbody className="divide-y">
             {rows.length === 0 && (
               <tr>
-                <td colSpan="4" className="px-5 py-6 text-center text-gray-500">
-                  No students enrolled.
+                <td colSpan="5" className="px-5 py-6 text-center text-gray-500">
+                  No students enrolled{studyModeFilter && ` for ${studyModeFilter.replace('-', ' ')} students`}.
                 </td>
               </tr>
             )}
@@ -216,6 +266,16 @@ export default function UnitStudents() {
               <tr key={r.key}>
                 <Td className="font-medium">{r.name}</Td>
                 <Td>{r.reg}</Td>
+                <Td>
+                  <span className={`px-2 py-1 text-xs rounded-full ${
+                    r.study_mode === 'full-time' ? 'bg-green-100 text-green-800' :
+                    r.study_mode === 'part-time' ? 'bg-blue-100 text-blue-800' :
+                    r.study_mode === 'weekend' ? 'bg-purple-100 text-purple-800' :
+                    'bg-gray-100 text-gray-800'
+                  }`}>
+                    {r.study_mode ? r.study_mode.charAt(0).toUpperCase() + r.study_mode.slice(1).replace('-', ' ') : 'Not Set'}
+                  </span>
+                </Td>
                 <Td>{r.marks}</Td>
                 <Td>{r.grade}</Td>
               </tr>

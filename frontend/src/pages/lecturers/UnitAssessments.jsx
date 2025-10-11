@@ -25,6 +25,7 @@ export default function UnitAssessments() {
     title: "",
     weight: "",
     max_score: 100,
+    study_mode: "",
   });
 
   const [editAss, setEditAss] = useState(null);
@@ -240,6 +241,7 @@ setStudents(normalizedStudents);
                 <Th>Title</Th>
                 <Th>Weight (%)</Th>
                 <Th>Max</Th>
+                <Th>Study Mode</Th>
                 <Th>Published</Th>
                 <Th className="w-60">Actions</Th>
               </tr>
@@ -248,7 +250,7 @@ setStudents(normalizedStudents);
               {items.length === 0 && (
                 <tr>
                   <td
-                    colSpan="5"
+                    colSpan="6"
                     className="px-5 py-6 text-center text-gray-500"
                   >
                     No assessments yet.
@@ -260,6 +262,20 @@ setStudents(normalizedStudents);
                   <Td className="font-medium">{a.title}</Td>
                   <Td>{a.weight ?? 0}</Td>
                   <Td>{a.max_score ?? 100}</Td>
+                  <Td>
+                    {a.study_mode ? (
+                      <span className={`px-2 py-1 text-xs rounded-full ${
+                        a.study_mode === 'full-time' ? 'bg-green-100 text-green-800' :
+                        a.study_mode === 'part-time' ? 'bg-blue-100 text-blue-800' :
+                        a.study_mode === 'weekend' ? 'bg-purple-100 text-purple-800' :
+                        'bg-gray-100 text-gray-800'
+                      }`}>
+                        {a.study_mode.charAt(0).toUpperCase() + a.study_mode.slice(1).replace('-', ' ')}
+                      </span>
+                    ) : (
+                      <span className="text-gray-400 text-xs">All Modes</span>
+                    )}
+                  </Td>
                   <Td>
                     <span
                       className={`px-2 py-0.5 rounded-full text-xs ${
@@ -359,6 +375,29 @@ setStudents(normalizedStudents);
                 />
               </div>
             </div>
+            
+            {/* Study Mode Selection */}
+            <div>
+              <label className="block text-xs text-gray-600">
+                Study Mode (Optional)
+              </label>
+              <select
+                className="mt-1 w-full rounded-md border border-gray-300 p-2 focus:ring-green-600 focus:border-green-600"
+                value={form.study_mode}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, study_mode: e.target.value }))
+                }
+              >
+                <option value="">All Study Modes</option>
+                <option value="full-time">Full Time</option>
+                <option value="part-time">Part Time</option>
+                <option value="weekend">Weekend</option>
+              </select>
+              <p className="mt-1 text-xs text-gray-500">
+                Select a specific study mode to limit this assessment to those students only
+              </p>
+            </div>
+            
             <button
               type="submit"
               className="mt-1 inline-flex items-center justify-center rounded-md bg-green-700 text-white px-4 py-2 hover:bg-green-800"

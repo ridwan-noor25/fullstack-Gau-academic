@@ -60,9 +60,9 @@ export default function HodLayout() {
       : "HoD");
 
   return (
-    <div className="min-h-[calc(100vh-64px)] bg-gray-50">
+    <div className="min-h-[calc(100vh-4rem)] bg-gray-50">
       {/* Mobile top bar: only shows hamburger when sidebar is closed */}
-      <div className="lg:hidden sticky top-0 z-30 bg-gray-50/80 backdrop-blur border-b">
+      <div className="lg:hidden sticky top-0 z-40 bg-gray-50/80 backdrop-blur border-b">
         <div className="mx-auto max-w-7xl px-4 py-3 flex items-center gap-3">
           {!open && (
             <button
@@ -78,19 +78,17 @@ export default function HodLayout() {
         </div>
       </div>
 
-      {/* Viewport shell: lock page scroll and give each pane its own scroll */}
-      <div className="mx-auto max-w-7xl px-4 py-6 h-[calc(100vh-96px)] overflow-hidden">
-        <div className="flex h-full gap-6">
-          {/* Sidebar (desktop rail or mobile drawer) */}
-          <HodSidebar open={open} onClose={() => setOpen(false)} onOpen={() => setOpen(true)} />
+      {/* Viewport shell: full screen layout accounting for navbar */}
+      <div className="flex h-[calc(100vh-4rem)] lg:h-[calc(100vh-4rem)]">
+        {/* Sidebar (desktop rail or mobile drawer) */}
+        <HodSidebar open={open} onClose={() => setOpen(false)} onOpen={() => setOpen(true)} />
 
-          {/* Content pane — independent scrolling */}
-          <main className="flex-1 h-full overflow-y-auto">
-            <div className="rounded-2xl border border-gray-200 bg-white shadow-sm p-5">
-              <Outlet />
-            </div>
-          </main>
-        </div>
+        {/* Content pane — full width, no padding container */}
+        <main className="flex-1 h-full overflow-y-auto bg-gray-50">
+          <div className="h-full p-4 lg:p-6">
+            <Outlet />
+          </div>
+        </main>
       </div>
     </div>
   );

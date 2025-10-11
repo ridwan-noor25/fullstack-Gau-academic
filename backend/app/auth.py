@@ -231,9 +231,37 @@ from werkzeug.security import generate_password_hash
 from itsdangerous import URLSafeTimedSerializer, BadSignature, SignatureExpired
 
 from .extensions import db
-from .models import User, Department, Activity
+from .models import User, Department, Activity, School, Program
 
 auth_bp = Blueprint("auth", __name__)
+
+
+# ==========================
+# Schools and Programs API for registration
+# ==========================
+@auth_bp.get("/schools")
+def get_schools():
+    """Get all schools for registration dropdown"""
+    schools = School.query.filter_by().all()
+    return jsonify([school.to_dict() for school in schools])
+
+
+@auth_bp.get("/schools/<int:school_id>/programs")
+def get_school_programs(school_id):
+    """Get all programs for a specific school"""
+    school = School.query.get(school_id)
+    if not school:
+        return jsonify(error="school not found"), 404
+    
+    programs = Program.query.filter_by(school_id=school_id, is_active=True).all()
+    return jsonify([program.to_dict() for program in programs])
+
+
+@auth_bp.get("/programs")
+def get_all_programs():
+    """Get all active programs"""
+    programs = Program.query.filter_by(is_active=True).all()
+    return jsonify([program.to_dict() for program in programs])
 
 
 # ==========================
@@ -268,10 +296,15 @@ def register():
     department_id = data.get("department_id")
     reg_number = (data.get("reg_number") or data.get("regNo") or data.get("reg_no") or data.get("regNumber") or "").strip()
     
+    # NEW: School and Program selection
+    school_id = data.get("school_id")
+    program_id = data.get("program_id")
+    
     # Academic year fields
     academic_year = data.get("academic_year")
     academic_session = (data.get("academic_session") or "").strip()
     entry_year = data.get("entry_year")
+    study_mode = (data.get("study_mode") or "").strip()
 
     if not all([name, email, password]):
         return jsonify(error="name, email, password required"), 400
@@ -280,10 +313,40 @@ def register():
     if User.query.filter_by(email=email).first():
         return jsonify(error="email already exists"), 409
 
+    # Validate school and program for students and lecturers
+    if role in ("student", "lecturer"):
+        if not school_id:
+            return jsonify(error="school_id required for students and lecturers"), 400
+        if not program_id:
+            return jsonify(error="program_id required for students and lecturers"), 400
+            
+        try:
+            school_id = int(school_id)
+            program_id = int(program_id)
+        except (TypeError, ValueError):
+            return jsonify(error="school_id and program_id must be integers"), 400
+            
+        # Verify school exists
+        school = School.query.get(school_id)
+        if not school:
+            return jsonify(error="school not found"), 404
+            
+        # Verify program exists and belongs to the school
+        program = Program.query.get(program_id)
+        if not program:
+            return jsonify(error="program not found"), 404
+        if program.school_id != school_id:
+            return jsonify(error="program does not belong to the selected school"), 400
+
     u = User(name=name, email=email, role=role)
     u.set_password(password)
     if reg_number:
         u.reg_number = reg_number
+    
+    # Set school and program for students and lecturers
+    if role in ("student", "lecturer"):
+        u.school_id = school_id
+        u.program_id = program_id
     
     # Set academic year fields for students
     if role == "student":
@@ -293,36 +356,72 @@ def register():
             u.academic_session = academic_session
         if entry_year:
             u.entry_year = int(entry_year)
+        if study_mode:
+            u.study_mode = study_mode
 
     # Special handling for HOD creation
     if role == "hod":
-        if department_id is None:
-            return jsonify(error="department_id required for HOD creation"), 400
-        try:
-            department_id = int(department_id)
-        except (TypeError, ValueError):
-            return jsonify(error="department_id must be integer"), 400
+        # HODs can be assigned to either departments or programs
+        if not department_id and not program_id:
+            return jsonify(error="department_id or program_id required for HOD creation"), 400
+        
+        if department_id and program_id:
+            return jsonify(error="HOD cannot be assigned to both department and program"), 400
+            
+        if department_id:
+            try:
+                department_id = int(department_id)
+            except (TypeError, ValueError):
+                return jsonify(error="department_id must be integer"), 400
 
-        dept = Department.query.get(department_id)
-        if not dept:
-            return jsonify(error="department not found"), 404
-        if dept.hod_user_id:
-            return jsonify(error="department already has a HoD"), 409
+            dept = Department.query.get(department_id)
+            if not dept:
+                return jsonify(error="department not found"), 404
+            if dept.hod_user_id:
+                return jsonify(error="department already has a HoD"), 409
 
-        u.department_id = dept.id
-        db.session.add(u)
-        db.session.flush()
-        dept.hod_user_id = u.id
-        db.session.add(dept)
-        db.session.commit()
+            u.department_id = dept.id
+            db.session.add(u)
+            db.session.flush()
+            dept.hod_user_id = u.id
+            db.session.add(dept)
+            db.session.commit()
 
-        return (
-            jsonify(
-                message="HoD created and assigned to department.",
-                user=u.to_dict(),
-            ),
-            201,
-        )
+            return (
+                jsonify(
+                    message="HoD created and assigned to department.",
+                    user=u.to_dict(),
+                ),
+                201,
+            )
+        
+        elif program_id:
+            try:
+                program_id = int(program_id)
+            except (TypeError, ValueError):
+                return jsonify(error="program_id must be integer"), 400
+
+            program = Program.query.get(program_id)
+            if not program:
+                return jsonify(error="program not found"), 404
+            if program.hod_user_id:
+                return jsonify(error="program already has a HoD"), 409
+
+            u.program_id = program.id
+            u.school_id = program.school_id  # Set school automatically
+            db.session.add(u)
+            db.session.flush()
+            program.hod_user_id = u.id
+            db.session.add(program)
+            db.session.commit()
+
+            return (
+                jsonify(
+                    message="HoD created and assigned to program.",
+                    user=u.to_dict(),
+                ),
+                201,
+            )
 
     # Other roles: optional department assignment
     if department_id is not None:
