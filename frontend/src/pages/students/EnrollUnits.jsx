@@ -115,18 +115,17 @@ export default function EnrollUnits() {
                 <tr>
                   <Th>Code</Th>
                   <Th>Title</Th>
-                  <Th>Credits</Th>
                   <Th className="text-right">Actions</Th>
                 </tr>
               </thead>
               <tbody className="divide-y">
                 {loading ? (
                   <tr>
-                    <td colSpan={4} className="px-4 py-8 text-center text-gray-600">Loading…</td>
+                    <td colSpan={3} className="px-4 py-8 text-center text-gray-600">Loading…</td>
                   </tr>
                 ) : (units.length === 0 ? (
                   <tr>
-                    <td colSpan={4} className="px-4 py-6 text-center text-gray-500">No units available.</td>
+                    <td colSpan={3} className="px-4 py-6 text-center text-gray-500">No units available.</td>
                   </tr>
                 ) : (
                   units.map((u) => {
@@ -135,7 +134,6 @@ export default function EnrollUnits() {
                       <tr key={u.id}>
                         <Td className="font-medium">{u.code}</Td>
                         <Td>{u.title}</Td>
-                        <Td>{u.credits ?? "—"}</Td>
                         <Td className="text-right">
                           <button
                             onClick={() => onEnroll(u.id)}

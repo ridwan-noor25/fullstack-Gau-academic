@@ -276,7 +276,17 @@ def update_assessment(ass_id: int):
         a.due_at = datetime.fromisoformat(val) if val else None
 
     if "is_published" in data:
+        was_published = a.is_published
         a.is_published = bool(data["is_published"])
+        
+        # If assessment just got published, notify students
+        if not was_published and a.is_published:
+            try:
+                from .notifications import notify_students_grades_published
+                notify_students_grades_published(a.unit_id, a.title)
+            except Exception as e:
+                import logging
+                logging.error(f"Failed to send grade notifications: {str(e)}")
 
     db.session.commit()
     return jsonify(data=a.to_dict()), 200
@@ -514,6 +524,16 @@ def publish_unit(unit_id: int):
         a.is_published = True
 
     db.session.commit()
+    
+    # ✅ Send notification to all enrolled students
+    try:
+        from .notifications import notify_students_grades_published
+        notify_students_grades_published(unit_id, f"All assessments for {unit.code}")
+    except Exception as e:
+        # Don't fail the publish operation if notifications fail
+        import logging
+        logging.error(f"Failed to send grade notifications: {str(e)}")
+    
     return jsonify(message="unit assessments published"), 200
 
 

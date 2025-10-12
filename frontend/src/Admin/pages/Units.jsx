@@ -8,7 +8,7 @@ const [units, setUnits] = useState([])
 const [code, setCode] = useState('')
 const [title, setTitle] = useState('')
 const [department_id, setDepartmentId] = useState('')
-// const [credits, setCredits] = useState(3)
+const [credits, setCredits] = useState(3)
 const [err, setErr] = useState('')
 
 

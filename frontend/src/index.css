@@ -1,1 +1,33 @@
 @import "tailwindcss";
+
+/* Print Styles */
+@media print {
+  /* Hide everything except transcript */
+  body * {
+    visibility: hidden;
+  }
+  
+  /* Show transcript content */
+  .transcript-container,
+  .transcript-container * {
+    visibility: visible !important;
+  }
+  
+  /* Position transcript */
+  .transcript-container {
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 15mm !important;
+    background: white !important;
+  }
+  
+  /* Page settings */
+  @page {
+    margin: 0;
+    size: A4 portrait;
+  }
+}

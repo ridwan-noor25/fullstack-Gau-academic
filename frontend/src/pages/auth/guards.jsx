@@ -29,7 +29,7 @@ export function RequireAuth({ children }) {
   const location = useLocation();
   const { authed } = getAuth();
   if (!authed) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
+    return <Navigate to="/" state={{ from: location }} replace />;
   }
   return children;
 }
@@ -39,10 +39,10 @@ export function RequireRole({ roles = [], children }) {
   const { authed, role } = getAuth();
 
   if (!authed) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
+    return <Navigate to="/" state={{ from: location }} replace />;
   }
   if (roles.length && !roles.includes(role)) {
-    return <Navigate to="/student/sidebar" replace />;
+    return <Navigate to="/" replace />;
   }
   return children;
 }

@@ -16,11 +16,17 @@ api_bp = Blueprint("api", __name__)
 @role_required("admin")
 def create_department():
     data = request.get_json(force=True)
+    
+    # Enhanced department creation with school and program support
     d = Department(
         name=data["name"].strip(),
         code=data["code"].strip(),
         hod_user_id=data.get("hod_user_id"),
+        school_id=data.get("school_id"),
+        program_id=data.get("program_id"),
+        department_type=data.get("department_type", "overall"),
     )
+    
     db.session.add(d)
     db.session.commit()
     return jsonify(d.to_dict()), 201

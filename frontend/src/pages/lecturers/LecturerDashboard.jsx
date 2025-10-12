@@ -32,6 +32,7 @@ export default function LecturerDashboard() {
   const [units, setUnits] = useState([]);
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [selectedAcademicYear, setSelectedAcademicYear] = useState("");
 
   useEffect(() => {
     let on = true;
@@ -64,6 +65,29 @@ export default function LecturerDashboard() {
 
   return (
     <>
+      {/* Academic Year Filter */}
+      <div className="mb-6 bg-white rounded-xl shadow-sm ring-1 ring-gray-200 p-4">
+        <div className="flex items-center gap-4">
+          <label className="text-sm font-medium text-gray-700">Academic Year:</label>
+          <select
+            value={selectedAcademicYear}
+            onChange={(e) => setSelectedAcademicYear(e.target.value)}
+            className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-green-600 focus:ring-green-600"
+          >
+            <option value="">All Years</option>
+            <option value="1">Year 1</option>
+            <option value="2">Year 2</option>
+            <option value="3">Year 3</option>
+            <option value="4">Year 4</option>
+          </select>
+          {selectedAcademicYear && (
+            <span className="text-sm text-gray-500">
+              Filtering for Year {selectedAcademicYear} students
+            </span>
+          )}
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
         <Card title="My Units" value={units.length} icon={BookOpenIcon} tone="blue" />
         <Card title="Pending Reports" value={pendingCount} icon={InboxIcon} tone="amber" />

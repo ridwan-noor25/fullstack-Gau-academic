@@ -2,7 +2,7 @@ import React from "react";
 
 const HodTranscript = ({ student, grades, meanGrade, summary, date }) => {
   return (
-    <div className="bg-white max-w-4xl mx-auto my-10 p-8 border border-gray-300 shadow-md print:p-4 print:shadow-none print:border-none">
+    <div className="transcript-container bg-white max-w-4xl mx-auto my-10 p-8 border border-gray-300 shadow-md">
       {/* Header */}
       <div className="text-center">
         <img
@@ -40,7 +40,7 @@ const HodTranscript = ({ student, grades, meanGrade, summary, date }) => {
         <p><span className="font-semibold">Reg. No:</span> {student?.reg_number}</p>
         <p><span className="font-semibold">Degree Programme:</span> {student?.programme}</p>
         <p><span className="font-semibold">Academic Year:</span> {student?.academic_year}</p>
-        <p><span className="font-semibold">Year of Study:</span> {student?.year} &nbsp;&nbsp; <span className="font-semibold">Semester:</span> {student?.semester}</p>
+        <p><span className="font-semibold">Year of Study:</span> {student?.year_of_study} &nbsp;&nbsp; <span className="font-semibold">Semester:</span> {student?.semester}</p>
       </div>
       {/* Grades Table */}
       <div className="mt-6 overflow-x-auto">
@@ -126,7 +126,6 @@ const HodTranscript = ({ student, grades, meanGrade, summary, date }) => {
           <div className="flex flex-col items-end">
             <div className="border-t border-gray-700 w-32 mb-1" />
             <span className="text-sm font-semibold">DATE</span>
-            <span className="text-xs text-gray-600">{date}</span>
           </div>
         </div>
       </div>

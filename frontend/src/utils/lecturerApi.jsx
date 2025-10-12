@@ -49,7 +49,7 @@ export async function getUnitStudents(unitId, studyMode = null) {
     url += `?study_mode=${encodeURIComponent(studyMode)}`;
   }
   const j = await apiFetch(url);
-  return j || { items: [], count: 0, study_mode_stats: {}, available_study_modes: [] };
+  return Array.isArray(j?.items) ? j.items : [];
 }
 
 export async function getUnitAssessments(unitId) {

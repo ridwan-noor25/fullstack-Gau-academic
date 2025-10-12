@@ -1,4 +1,4 @@
-const BASE = import.meta.env.VITE_API_BASE || "http://localhost:5001/api";
+const BASE = import.meta.env.VITE_API_BASE || "/api";
 
 export const api = {
   token: null,
@@ -67,3 +67,6 @@ export const api = {
     return this.request(path, { ...opts, method: "DELETE" });
   },
 };
+
+// Export as both named and default export for compatibility
+export default api;

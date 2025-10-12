@@ -538,14 +538,14 @@ class School(TimestampMixin, db.Model):
         passive_deletes=True,
     )
 
-    # users relationship temporarily commented out until migration is complete
-    # users = db.relationship(
-    #     "User",
-    #     back_populates="school", 
-    #     foreign_keys="User.school_id",
-    #     lazy="selectin",
-    #     passive_deletes=True,
-    # )
+    # users relationship
+    users = db.relationship(
+        "User",
+        back_populates="school", 
+        foreign_keys="User.school_id",
+        lazy="selectin",
+        passive_deletes=True,
+    )
 
     def to_dict(self) -> dict:
         return {
@@ -595,14 +595,14 @@ class Program(TimestampMixin, db.Model):
         lazy="selectin",
     )
 
-    # users relationship temporarily commented out until migration is complete
-    # users = db.relationship(
-    #     "User",
-    #     back_populates="program_rel",
-    #     foreign_keys="User.program_id",
-    #     lazy="selectin",
-    #     passive_deletes=True,
-    # )
+    # users relationship 
+    users = db.relationship(
+        "User",
+        back_populates="program_rel",
+        foreign_keys="User.program_id",
+        lazy="selectin",
+        passive_deletes=True,
+    )
 
     def to_dict(self) -> dict:
         return {
@@ -624,11 +624,47 @@ class Department(TimestampMixin, db.Model):
     name = db.Column(db.String(160), nullable=False, unique=True, index=True)
     code = db.Column(db.String(32), nullable=False, unique=True, index=True)
 
+    # School and Program associations
+    school_id = db.Column(
+        db.Integer,
+        db.ForeignKey("schools.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+    
+    program_id = db.Column(
+        db.Integer,
+        db.ForeignKey("programs.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+    
+    # Department type for schools with multiple HODs (like EASS)
+    department_type = db.Column(
+        db.String(50),
+        nullable=True,
+        default="overall",
+        index=True
+    )  # 'overall', 'education_science', 'education_arts'
+
     parent_id = db.Column(
         db.Integer,
         db.ForeignKey("departments.id", ondelete="SET NULL"),
         nullable=True,
         index=True,
+    )
+
+    # Relationships
+    school = db.relationship(
+        "School",
+        foreign_keys=[school_id],
+        lazy="selectin",
+    )
+    
+    program = db.relationship(
+        "Program",
+        foreign_keys=[program_id],
+        lazy="selectin",
     )
 
     parent = db.relationship(
@@ -686,7 +722,12 @@ class Department(TimestampMixin, db.Model):
             "code": self.code,
             "hod_user_id": self.hod_user_id,
             "parent_id": self.parent_id,
+            "school_id": self.school_id,
+            "program_id": self.program_id,
+            "department_type": self.department_type,
             "children": [child.id for child in self.children],
+            "school": self.school.to_dict() if self.school else None,
+            "program": self.program.to_dict() if self.program else None,
         }
 
 
@@ -739,19 +780,20 @@ class User(TimestampMixin, db.Model):
     )
 
     # Temporarily commented out until columns exist
-    # school = db.relationship(
-    #     "School",
-    #     back_populates="users",
-    #     foreign_keys=[school_id],
-    #     lazy="selectin",
-    # )
+    # Relationships
+    school = db.relationship(
+        "School",
+        back_populates="users",
+        foreign_keys=[school_id],
+        lazy="selectin",
+    )
 
-    # program_rel = db.relationship(
-    #     "Program",
-    #     back_populates="users",
-    #     foreign_keys=[program_id],
-    #     lazy="selectin",
-    # )
+    program_rel = db.relationship(
+        "Program",
+        back_populates="users",
+        foreign_keys=[program_id],
+        lazy="selectin",
+    )
 
     hod_of_department = db.relationship(
         "Department",
@@ -1175,6 +1217,109 @@ class MissingMarkReport(TimestampMixin, db.Model):
         }
 
 
+# ---------- Notifications ----------
+class Notification(TimestampMixin, db.Model):
+    __tablename__ = "notifications"
+    
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(255), nullable=False)
+    message = db.Column(db.Text, nullable=False)
+    type = db.Column(db.String(50), nullable=False, index=True)  # 'transcript_ready', 'grade_published', 'general'
+    
+    # Target audience
+    user_id = db.Column(
+        db.Integer,
+        db.ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=True,
+        index=True,
+    )  # For individual notifications
+    
+    role = db.Column(db.String(32), nullable=True, index=True)  # For role-based notifications
+    department_id = db.Column(
+        db.Integer,
+        db.ForeignKey("departments.id", ondelete="CASCADE"),
+        nullable=True,
+        index=True,
+    )  # For department-based notifications
+    
+    # Metadata
+    is_read = db.Column(db.Boolean, nullable=False, default=False, index=True)
+    sent_via_email = db.Column(db.Boolean, nullable=False, default=False, index=True)
+    
+    # References
+    unit_id = db.Column(
+        db.Integer,
+        db.ForeignKey("units.id", ondelete="CASCADE"),
+        nullable=True,
+        index=True,
+    )  # For grade-related notifications
+    
+    assessment_id = db.Column(
+        db.Integer,
+        db.ForeignKey("assessments.id", ondelete="CASCADE"),
+        nullable=True,
+        index=True,
+    )  # For assessment-related notifications
+    
+    created_by = db.Column(
+        db.Integer,
+        db.ForeignKey("users.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )  # Who created the notification
+    
+    # Relationships
+    user = db.relationship(
+        "User",
+        foreign_keys=[user_id],
+        lazy="selectin",
+    )
+    
+    department = db.relationship(
+        "Department",
+        foreign_keys=[department_id],
+        lazy="selectin",
+    )
+    
+    unit = db.relationship(
+        "Unit",
+        foreign_keys=[unit_id],
+        lazy="selectin",
+    )
+    
+    assessment = db.relationship(
+        "Assessment",
+        foreign_keys=[assessment_id],
+        lazy="selectin",
+    )
+    
+    creator = db.relationship(
+        "User",
+        foreign_keys=[created_by],
+        lazy="selectin",
+    )
+    
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "title": self.title,
+            "message": self.message,
+            "type": self.type,
+            "user_id": self.user_id,
+            "role": self.role,
+            "department_id": self.department_id,
+            "is_read": self.is_read,
+            "sent_via_email": self.sent_via_email,
+            "unit_id": self.unit_id,
+            "assessment_id": self.assessment_id,
+            "created_by": self.created_by,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+            "unit": self.unit.to_dict() if self.unit else None,
+            "assessment": self.assessment.to_dict() if self.assessment else None,
+        }
+
+
 # ---------- Admin Dashboard Helper ----------
 class Activity(TimestampMixin, db.Model):
     __tablename__ = "activities"
@@ -1211,5 +1356,6 @@ __all__ = [
     "Assessment",
     "Grade",
     "MissingMarkReport",
+    "Notification",
     "Activity",
 ]

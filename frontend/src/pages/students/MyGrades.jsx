@@ -4,14 +4,14 @@ import { studentListPublishedGrades } from "../../utils/studentApi";
 
 function Th({ children }) {
   return (
-    <th className="px-4 py-2 text-xs font-medium uppercase tracking-wide text-gray-500">
+    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500 bg-gray-50">
       {children}
     </th>
   );
 }
 
 function Td({ children, className = "" }) {
-  return <td className={`px-4 py-2 ${className}`}>{children}</td>;
+  return <td className={`px-6 py-4 whitespace-nowrap ${className}`}>{children}</td>;
 }
 
 export default function MyGrades() {
@@ -67,66 +67,47 @@ export default function MyGrades() {
           No published grades yet.
         </div>
       ) : (
-        <>
-          {groups.map(({ unit, assessments }) => {
-            let totalScore = 0;
-            if (Array.isArray(assessments)) {
-              assessments.forEach((a) => {
-                totalScore += (a?.score != null ? Number(a.score) : 0);
-              });
-            }
-            const pct = (totalScore / 100) * 100;
-            const letter = getLetterGrade(pct);
+        <div className="rounded-xl border bg-white shadow-sm overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead>
+                <tr>
+                  <Th>Course Code</Th>
+                  <Th>Course Title</Th>
+                  <Th>Grade</Th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {groups.map(({ unit, assessments }) => {
+                  let totalScore = 0;
+                  let totalMaxScore = 0;
+                  
+                  if (Array.isArray(assessments)) {
+                    assessments.forEach((a) => {
+                      totalScore += (a?.score != null ? Number(a.score) : 0);
+                      totalMaxScore += (a?.max_score != null ? Number(a.max_score) : 0);
+                    });
+                  }
+                  
+                  const pct = totalMaxScore > 0 ? (totalScore / totalMaxScore) * 100 : 0;
+                  const letter = getLetterGrade(pct);
 
-            return (
-              <section key={unit?.id} className="rounded-xl border bg-white shadow-sm overflow-hidden">
-                <div className="border-b bg-gray-50 px-4 py-3 flex justify-between items-center">
-                  <div className="font-semibold text-gray-900">
-                    {unit?.code} — {unit?.title}
-                  </div>
-                  <div className="text-sm font-medium text-green-700">
-                    Final Grade: {letter}{pct != null ? ` (${pct.toFixed(1)}%)` : ""}
-                  </div>
-                </div>
-
-                <div className="overflow-x-auto">
-                  <table className="min-w-full text-left text-sm">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <Th>Assessment</Th>
-                        <Th>Score</Th>
-                        <Th>Max</Th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y">
-                      {(!assessments || assessments.length === 0) && (
-                        <tr>
-                          <td colSpan={3} className="px-4 py-5 text-gray-500 text-center">
-                            No published assessments in this unit yet.
-                          </td>
-                        </tr>
-                      )}
-                      {assessments && assessments.length > 0 && assessments.map((a) => (
-                        <tr key={a.id}>
-                          <Td className="font-medium">{a.title}</Td>
-                          <Td>{a.score != null ? a.score : "—"}</Td>
-                          <Td>{a.max_score != null ? a.max_score : "—"}</Td>
-                        </tr>
-                      ))}
-                      {/* TOTAL row: show overall percent only (no separate % column) */}
-                      <tr className="bg-gray-50 font-medium">
-                        <Td>Total (CAT + Exam)</Td>
-                        <Td colSpan={2}>
-                          {pct != null ? `${pct.toFixed(1)}%` : "—"}
-                        </Td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-              </section>
-            );
-          })}
-        </>
+                  return (
+                    <tr key={unit?.id} className="hover:bg-gray-50">
+                      <Td className="font-medium text-gray-900">{unit?.code}</Td>
+                      <Td className="text-gray-900">{unit?.title}</Td>
+                      <Td>
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                          {letter}
+                        </span>
+                      </Td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
       )}
     </div>
   );
