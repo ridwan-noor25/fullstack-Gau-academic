@@ -81,25 +81,41 @@ export default function MyGrades() {
                 {groups.map(({ unit, assessments }) => {
                   let totalScore = 0;
                   let totalMaxScore = 0;
+                  let hasValidGrades = false;
                   
-                  if (Array.isArray(assessments)) {
+                  if (Array.isArray(assessments) && assessments.length > 0) {
                     assessments.forEach((a) => {
-                      totalScore += (a?.score != null ? Number(a.score) : 0);
-                      totalMaxScore += (a?.max_score != null ? Number(a.max_score) : 0);
+                      if (a?.score != null && a?.max_score != null) {
+                        totalScore += Number(a.score);
+                        totalMaxScore += Number(a.max_score);
+                        hasValidGrades = true;
+                      }
                     });
                   }
                   
-                  const pct = totalMaxScore > 0 ? (totalScore / totalMaxScore) * 100 : 0;
-                  const letter = getLetterGrade(pct);
+                  // If no valid grades exist, show dash
+                  let letter;
+                  if (!hasValidGrades || totalMaxScore === 0) {
+                    letter = "—";
+                  } else {
+                    const pct = (totalScore / totalMaxScore) * 100;
+                    letter = getLetterGrade(pct);
+                  }
 
                   return (
                     <tr key={unit?.id} className="hover:bg-gray-50">
                       <Td className="font-medium text-gray-900">{unit?.code}</Td>
                       <Td className="text-gray-900">{unit?.title}</Td>
                       <Td>
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                          {letter}
-                        </span>
+                        {letter === "—" ? (
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+                            —
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                            {letter}
+                          </span>
+                        )}
                       </Td>
                     </tr>
                   );
